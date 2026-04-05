@@ -22,8 +22,7 @@ export function BrandLogo({
         width={compact ? 42 : 200}
         height={compact ? 42 : 56}
         priority
-        className={`object-contain transition-all duration-500 ${imageClassName}`.trim()}
-        style={{ width: "auto", height: "auto" }}
+        className={`object-contain transition-all duration-500 h-auto ${imageClassName}`.trim()}
       />
     </span>
   );

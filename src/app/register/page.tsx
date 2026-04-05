@@ -6,6 +6,9 @@ import { registerAction } from "./actions";
 import { Loader2, ArrowRight, ShieldCheck, Building2, User2, Search, CheckCircle2, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { formatCNPJ } from "@/lib/validation/schemas";
+
+import { useDebounce, useAsyncState } from "@/lib/hooks";
 
 interface CompanySuggestion {
   id: string;
@@ -18,9 +21,6 @@ function RegisterForm() {
   const router = useRouter();
   const planKey = searchParams.get("plan") || "";
   
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
   // Estados para Busca Inteligente de Empresa
   const [email, setEmail] = useState("");
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
@@ -30,11 +30,14 @@ function RegisterForm() {
   const [manualCompanyName, setManualCompanyName] = useState("");
   const [manualCnpj, setManualCnpj] = useState("");
 
-  // Extrair domínio para sugerir busca
+  // Hook de Debounce
+  const debouncedEmail = useDebounce(email, 600);
+
+  // Busca Inteligente com Debounce
   useEffect(() => {
     const searchCompany = async () => {
-      if (email.includes("@")) {
-        const domain = email.split("@")[1];
+      if (debouncedEmail.includes("@")) {
+        const domain = debouncedEmail.split("@")[1];
         const domainName = domain.split(".")[0];
         
         if (domainName.length > 2) {
@@ -58,23 +61,12 @@ function RegisterForm() {
       }
     };
 
-    const timer = setTimeout(searchCompany, 600);
-    return () => clearTimeout(timer);
-  }, [email]);
+    searchCompany();
+  }, [debouncedEmail]);
 
   const handleSelectCompany = (company: CompanySuggestion) => {
     setSelectedCompany(company);
     setShowSuggestions(false);
-  };
-
-  const formatCNPJ = (value: string) => {
-    const cleanValue = value.replace(/\D/g, "");
-    return cleanValue
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d{3})(\d)/, ".$1.$2/$3")
-      .replace(/(\d{4})(\d)/, "$1-$2")
-      .substring(0, 18);
   };
 
   const handleResetCompany = () => {
@@ -84,11 +76,16 @@ function RegisterForm() {
     setManualCnpj("");
   };
 
+  // Lógica de Registro encapsulada para useAsyncState
+  const { state: registrationState, execute: runRegistration, isLoading } = useAsyncState(async (formData: FormData) => {
+    const result = await registerAction(formData);
+    if (result?.error) throw new Error(result.error);
+    return result;
+  });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+    
     const formData = new FormData(e.currentTarget);
     if (selectedCompany) {
       formData.set("existingCompanyId", selectedCompany.id);
@@ -99,12 +96,7 @@ function RegisterForm() {
       formData.set("cnpj", manualCnpj);
     }
     
-    const result = await registerAction(formData);
-
-    if (result?.error) {
-      setError(result.error);
-      setLoading(false);
-    }
+    await runRegistration(formData);
   };
 
   return (
@@ -119,9 +111,9 @@ function RegisterForm() {
           </p>
         </div>
 
-        {error && (
+        {registrationState.status === 'error' && (
           <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium animate-in fade-in slide-in-from-top-1">
-            {error}
+            {registrationState.error?.message}
           </div>
         )}
 
@@ -268,10 +260,10 @@ function RegisterForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full bg-accent text-accent-foreground font-semibold py-4 rounded-full flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-4 shadow-lg shadow-accent/10"
           >
-            {loading ? (
+            {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Processando...
@@ -302,11 +294,11 @@ export default function RegisterPage() {
       <div className="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* Header fixo — FORA do card */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6">
-        <BrandLogo href="/" className="opacity-70 grayscale hover:grayscale-0 transition-all" />
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 pointer-events-none">
+        <BrandLogo href="/" className="opacity-70 grayscale hover:grayscale-0 transition-all pointer-events-auto" />
         <Link
           href="/"
-          className="text-[0.65rem] font-mono tracking-widest text-foreground/40 hover:text-accent flex items-center gap-2 group transition-all"
+          className="text-[0.65rem] font-mono tracking-widest text-foreground/40 hover:text-accent flex items-center gap-2 group transition-all pointer-events-auto"
         >
           <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
           VOLTAR PARA O INÍCIO
@@ -314,7 +306,7 @@ export default function RegisterPage() {
       </header>
 
       {/* Formulário centralizado */}
-      <div className="relative z-10 w-full flex items-center justify-center px-6 pt-24 pb-16">
+      <div className="relative z-10 w-full flex items-center justify-center px-6 pt-32 pb-16">
         <Suspense fallback={
           <div className="flex items-center justify-center">
             <Loader2 className="w-10 h-10 animate-spin text-accent" />

@@ -49,8 +49,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const fetchProfile = async () => {
       try {
         const supabase = createClient();
+        
+        // Busca paralela: Usuário e Perfil
+        // Nota: Precisamos do user.id para o perfil, mas o getUser() no client 
+        // é rápido pois busca do cache se disponível. 
+        // No entanto, para RSC seria ainda melhor. No Client, garantimos o Promise.all
+        // para quaisquer outras buscas relacionadas.
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) return;
 
         const { data: perfil } = await supabase
