@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -87,7 +87,7 @@ interface ExtractedField {
   selected?: boolean;
 }
 
-export default function GeradorPage() {
+function GeradorContent() {
   const searchParams = useSearchParams();
   const [scenario, setScenario] = useState<ScenarioKey | null>(null);
   const [categories, setCategories] = useState<string[]>(initialCategories);
@@ -802,6 +802,18 @@ export default function GeradorPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function GeradorPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    }>
+      <GeradorContent />
+    </Suspense>
   );
 }
 

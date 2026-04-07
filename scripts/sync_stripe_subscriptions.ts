@@ -94,8 +94,8 @@ async function main() {
       stripeSubscriptionId: sub.id,
       tipoPlano,
       status: sub.status,
-      fimPeriodoAtual: new Date((sub.current_period_end || 0) * 1000).toISOString(),
-      atualizadoEm: new Date().toISOString(),
+      fimPeriodoAtual: new Date((((sub as any).current_period_end || 0) * 1000)),
+      atualizadoEm: new Date(),
     };
 
     if (assExistente) {

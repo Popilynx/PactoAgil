@@ -106,8 +106,8 @@ export async function signup(formData: FormData) {
           email: email.toLowerCase().trim(),
           nomeCompleto: nomeExibicao,
           role: 'ADMIN',
-          criadoEm: new Date().toISOString(),
-          atualizadoEm: new Date().toISOString(),
+          criadoEm: new Date(),
+          atualizadoEm: new Date(),
         });
 
       // Se houver plano, redireciona direto para o checkout (com bypass de login manual)

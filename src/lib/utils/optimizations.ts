@@ -19,7 +19,7 @@ export function memoWithDeepCompare<T extends ComponentType<any>>(
 ): T {
   return memo(Component, (prevProps, nextProps) => {
     return JSON.stringify(prevProps) === JSON.stringify(nextProps);
-  }) as T;
+  }) as unknown as T;
 }
 
 /**
@@ -161,7 +161,7 @@ export function useWhyDidYouUpdate(
   React.useEffect(() => {
     if (prevProps.current) {
       const allKeys = Object.keys({ ...prevProps.current, ...props });
-      const changesObj: Record<string, { from: any; to: any > = {};
+      const changesObj: Record<string, { from: any; to: any }> = {};
       allKeys.forEach((key) => {
         if (prevProps.current[key] !== props[key]) {
           changesObj[key] = {

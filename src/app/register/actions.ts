@@ -102,7 +102,7 @@ export async function registerAction(formData: FormData) {
           nome: companyName,
           cnpj: cnpj,
           funcionalidade: funcionalidade || null,
-          atualizadoEm: new Date().toISOString(),
+          atualizadoEm: new Date(),
         })
         .select('id')
         .single();
@@ -127,7 +127,7 @@ export async function registerAction(formData: FormData) {
         nomeCompleto: fullName,
         empresaId: companyId,
         role: 'ADMIN',
-        atualizadoEm: new Date().toISOString(),
+        atualizadoEm: new Date(),
       });
       
     if (profileError) {

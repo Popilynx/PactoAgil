@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             .insert({
               id: crypto.randomUUID(),
               nome: `Empresa de ${perfil.nomeCompleto || userEmail}`,
-              atualizadoEm: new Date().toISOString(),
+              atualizadoEm: new Date(),
             })
             .select('id')
             .single();
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
           // Vincular perfil à nova empresa
           await supabase
             .from('Perfil')
-            .update({ empresaId, atualizadoEm: new Date().toISOString() })
+            .update({ empresaId, atualizadoEm: new Date() })
             .eq('id', perfil.id);
         }
 
@@ -117,8 +117,8 @@ export async function POST(req: Request) {
           stripeSubscriptionId: subscription.id,
           tipoPlano,
           status: subscription.status,
-          fimPeriodoAtual: new Date(((subscription as any).current_period_end || 0) * 1000).toISOString(),
-          atualizadoEm: new Date().toISOString(),
+          fimPeriodoAtual: new Date(((subscription as any).current_period_end || 0) * 1000),
+          atualizadoEm: new Date(),
         };
 
         if (assExistente) {
@@ -184,9 +184,9 @@ export async function POST(req: Request) {
             valor: invoice.amount_paid / 100,
             moeda: invoice.currency,
             status: 'paid',
-            dataPagamento: new Date().toISOString(),
+            dataPagamento: new Date(),
             urlFaturaPDF: invoice.invoice_pdf,
-            atualizadoEm: new Date().toISOString(),
+            atualizadoEm: new Date(),
           });
       }
     }
@@ -198,8 +198,8 @@ export async function POST(req: Request) {
         .from('Assinatura')
         .update({
           status: subscription.status,
-          fimPeriodoAtual: new Date((subscription.current_period_end || 0) * 1000).toISOString(),
-          atualizadoEm: new Date().toISOString(),
+          fimPeriodoAtual: new Date((subscription.current_period_end || 0) * 1000),
+          atualizadoEm: new Date(),
         })
         .eq('stripeSubscriptionId', subscription.id);
     }
@@ -211,7 +211,7 @@ export async function POST(req: Request) {
         .from('Assinatura')
         .update({
           status: 'canceled',
-          atualizadoEm: new Date().toISOString(),
+          atualizadoEm: new Date(),
         })
         .eq('stripeSubscriptionId', subscription.id);
     }

@@ -100,7 +100,7 @@ export async function GET(req: Request) {
         .insert({
           id: crypto.randomUUID(),
           nome: `Empresa de ${perfil.nomeCompleto || user.email}`,
-          atualizadoEm: new Date().toISOString(),
+          atualizadoEm: new Date(),
         })
         .select('id')
         .single();
@@ -114,7 +114,7 @@ export async function GET(req: Request) {
 
       await supabaseAdmin
         .from('Perfil')
-        .update({ empresaId, atualizadoEm: new Date().toISOString() })
+        .update({ empresaId, atualizadoEm: new Date() })
         .eq('id', perfil.id);
     }
 
@@ -130,8 +130,8 @@ export async function GET(req: Request) {
       stripeSubscriptionId: subscription.id,
       tipoPlano,
       status: subscription.status,
-      fimPeriodoAtual: new Date((subscription.current_period_end || 0) * 1000).toISOString(),
-      atualizadoEm: new Date().toISOString(),
+      fimPeriodoAtual: new Date((subscription.current_period_end || 0) * 1000),
+      atualizadoEm: new Date(),
     };
 
     if (assExistente) {

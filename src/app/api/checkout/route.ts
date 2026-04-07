@@ -53,7 +53,7 @@ async function createCheckoutSession(userId: string, email: string, planKey: str
         email,
         nomeCompleto: email.split('@')[0],
         role: 'ADMIN',
-        atualizadoEm: new Date().toISOString(),
+        atualizadoEm: new Date(),
       })
       .select('*')
       .single();
