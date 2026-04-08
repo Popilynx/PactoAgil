@@ -49,7 +49,7 @@ export async function requireAuth(request?: NextRequest | Request): Promise<stri
     // 1. Primeiro tentar via headers injetados pelo middleware (mais confiável em Edge)
     const userIdFromHeader = request ? getUserIdFromRequest(request) : null;
     if (userIdFromHeader) {
-      console.log('[requireAuth] Autenticado via header x-user-id:', userIdFromHeader);
+      console.log('[requireAuth][v3-fetch] Autenticado via header x-user-id:', userIdFromHeader);
       return userIdFromHeader;
     }
 

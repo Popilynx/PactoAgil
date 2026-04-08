@@ -28,12 +28,32 @@ function extractBearerToken(authHeader: string | null): string | null {
 }
 
 /**
- * Obtém o ID do usuário via token Bearer (admin client).
+ * Obtém o ID do usuário via token Bearer usando chamada direta à API (mais estável).
  */
 async function getUserIdFromToken(token: string): Promise<string | null> {
-  const adminClient = createAdminClient();
-  const { data: { user }, error } = await adminClient.auth.getUser(token);
-  return error || !user ? null : user.id;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey || !token) return null;
+
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': anonKey
+      }
+    });
+
+    if (res.ok) {
+      const user = await res.json();
+      return user.id;
+    }
+    return null;
+  } catch (err) {
+    console.error('[getUserIdFromToken] Erro na validação direta:', err);
+    return null;
+  }
 }
 
 /**
