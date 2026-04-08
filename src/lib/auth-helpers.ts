@@ -4,16 +4,18 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * Extrai o userId do header injetado pelo middleware.
- * Mantido para casos legados temporários, mas não recomendado para Vercel Edge.
  */
 export function getUserIdFromRequest(request: NextRequest | Request): string | null {
-  const userId = (request as NextRequest).headers?.get('x-user-id') 
-    ?? new Headers((request as Request).headers).get('x-user-id');
-  
+  const headers = request instanceof NextRequest
+    ? request.headers
+    : new Headers(request.headers);
+
+  const userId = headers.get('x-user-id');
+
   if (!userId || userId === '' || userId === 'undefined' || userId === 'null') {
     return null;
   }
-  
+
   return userId;
 }
 
@@ -22,30 +24,41 @@ export function getUserIdFromRequest(request: NextRequest | Request): string | n
  */
 function extractBearerToken(request?: NextRequest | Request): string | null {
   if (!request) return null;
-  
-  const headers = request instanceof NextRequest 
-    ? request.headers 
-    : new Headers((request as Request).headers);
-    
+
+  const headers = request instanceof NextRequest
+    ? request.headers
+    : new Headers(request.headers);
+
   const authHeader = headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  
+
   return authHeader.slice(7);
 }
 
 /**
- * Verifica autenticação via Cookies ou Header Authorization.
- * Muito mais robusto em produção (Vercel) pois suporta fallback para tokens manuais.
- * 
+ * Verifica autenticação via Headers do Middleware, Cookies ou Header Authorization.
+ * Ordem de prioridade:
+ * 1. Headers injetados pelo middleware (x-user-id) - mais confiável em Edge/Vercel
+ * 2. Cookies via Supabase Client
+ * 3. Bearer Token no header Authorization
+ *
  * Uso em API routes: const result = await requireAuth(request); if (result instanceof NextResponse) return result;
  */
 export async function requireAuth(request?: NextRequest | Request): Promise<string | NextResponse> {
   try {
-    // 1. Tentar via Cookies (padrão Supabase)
+    // 1. Primeiro tentar via headers injetados pelo middleware (mais confiável em Edge)
+    const userIdFromHeader = request ? getUserIdFromRequest(request) : null;
+    if (userIdFromHeader) {
+      console.log('[requireAuth] Autenticado via header x-user-id:', userIdFromHeader);
+      return userIdFromHeader;
+    }
+
+    // 2. Tentar via Cookies (padrão Supabase)
     const supabase = await createClient();
     const { data: { user }, error: sessionError } = await supabase.auth.getUser();
-    
+
     if (user && !sessionError) {
+      console.log('[requireAuth] Autenticado via cookie:', user.id);
       return user.id;
     }
 
@@ -53,32 +66,31 @@ export async function requireAuth(request?: NextRequest | Request): Promise<stri
       console.warn('[requireAuth] Sessão via cookie falhou:', sessionError.message);
     }
 
-    // 2. Fallback: Tentar via Header Authorization (Bearer Token)
+    // 3. Fallback: Tentar via Header Authorization (Bearer Token)
     const token = extractBearerToken(request);
-    
+
     if (token) {
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
+
       if (!serviceKey) {
-        console.error('[requireAuth] CRÍTICO: SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.');
+        console.error('[requireAuth] CRÍTICO: SUPABASE_SERVICE_ROLE_KEY não configurada.');
       } else {
         const adminClient = createAdminClient();
         const { data: { user: tokenUser }, error: tokenError } = await adminClient.auth.getUser(token);
-        
+
         if (tokenUser && !tokenError) {
-          console.log('[requireAuth] Autenticação via Bearer Token bem-sucedida para:', tokenUser.id);
+          console.log('[requireAuth] Autenticado via Bearer Token:', tokenUser.id);
           return tokenUser.id;
         }
-        
+
         if (tokenError) {
           console.warn('[requireAuth] Falha ao validar Bearer Token:', tokenError.message);
         }
       }
-    } else {
-      console.warn('[requireAuth] Nenhum token encontrado no cabeçalho Authorization.');
     }
-    
-    // Se ambos falharem
+
+    // Se todos falharem
+    console.error('[requireAuth] Todas as tentativas de autenticação falharam');
     return NextResponse.json(
       { error: 'Não autorizado. Faça login novamente.' },
       { status: 401 }

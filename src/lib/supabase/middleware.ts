@@ -3,8 +3,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { ROUTES } from '@/constants/routes'
 
 export async function updateSession(request: NextRequest) {
+  // Clonar headers para modificar
+  const requestHeaders = new Headers(request.headers)
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      ...request,
+      headers: requestHeaders,
+    },
   })
 
   const supabase = createServerClient(
@@ -16,10 +22,16 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+            requestHeaders.set(name, value)
+          })
+
           supabaseResponse = NextResponse.next({
-            request,
+            request: {
+              ...request,
+              headers: requestHeaders,
+            },
           })
 
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -30,10 +42,24 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Atualiza a sessão
+  // Atualiza a sessão e obtém o usuário
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // Injeta headers personalizados para uso nas API routes
+  if (user) {
+    requestHeaders.set('x-user-id', user.id)
+    requestHeaders.set('x-user-email', user.email || '')
+
+    // Recria a resposta com os novos headers
+    supabaseResponse = NextResponse.next({
+      request: {
+        ...request,
+        headers: requestHeaders,
+      },
+    })
+  }
 
   const isAuthRoute = request.nextUrl.pathname.startsWith(ROUTES.PAGES.AUTH.LOGIN)
   const isProtectedRoute =
