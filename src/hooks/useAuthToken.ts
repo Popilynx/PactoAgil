@@ -1,53 +1,47 @@
 import { useCallback, useRef } from 'react';
-import { ROUTES } from '@/constants/routes';
+import { createClient } from '@/lib/supabase/client';
 
 /**
- * Hook que obtém o access_token válido da sessão atual.
- * 
- * Estratégia: chama /api/auth/token (server-side) que lê os cookies HTTP-only
- * e retorna o JWT. Isso contorna o problema de getSession() retornar null
- * no cliente quando os cookies são HTTP-only (configuração padrão do @supabase/ssr).
- * 
- * O token é cacheado por 55 minutos (tokens Supabase expiram em 60min).
+ * Hook que obtém o access_token válido da sessão atual diretamente do 
+ * Supabase Browser Client. O Supabase Browser Client cuida de refresh
+ * automáticos e mantém o token atualizado.
  */
 export function useAuthToken() {
   const tokenRef = useRef<{ value: string; expiresAt: number } | null>(null);
+  const supabase = createClient();
 
   const getToken = useCallback(async (): Promise<string | null> => {
     const now = Date.now();
 
-    // Retorna o token cacheado se ainda for válido
-    if (tokenRef.current && tokenRef.current.expiresAt > now) {
+    // Retorna o token em cache se ainda houver 1 minuto de margem validade
+    if (tokenRef.current && tokenRef.current.expiresAt > (now + 60000)) {
       return tokenRef.current.value;
     }
 
     try {
-      const res = await fetch(ROUTES.API.AUTH.TOKEN, {
-        credentials: 'include', // garante que os cookies são enviados
-      });
-
-      if (!res.ok) {
-        console.warn('[useAuthToken] Falha ao obter token:', res.status);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.warn('[useAuthToken] Erro do Supabase auth:', error.message);
         return null;
       }
 
-      const data = await res.json();
-      const token = data.access_token as string;
+      if (!session?.access_token) {
+        return null; // Usuário não autenticado
+      }
 
-      if (!token) return null;
-
-      // Cache por 55 minutos
       tokenRef.current = {
-        value: token,
-        expiresAt: now + 55 * 60 * 1000,
+        value: session.access_token,
+        // session.expires_at é em segundos do epoch, converter para ms
+        expiresAt: session.expires_at ? session.expires_at * 1000 : now + 3600 * 1000,
       };
 
-      return token;
+      return session.access_token;
     } catch (err) {
-      console.error('[useAuthToken] Erro:', err);
+      console.error('[useAuthToken] Erro inesperado capturando token:', err);
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   /**
    * Retorna os headers de autenticação prontos para uso em fetch()
