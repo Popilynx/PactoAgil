@@ -109,6 +109,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: true,
   },
+
+  // Transpilar pacotes ESM problemáticos
+  transpilePackages: ["mammoth", "docx"],
 };
+
 
 export default nextConfig;

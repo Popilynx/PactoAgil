@@ -22,8 +22,9 @@ export async function POST(request: Request) {
     const { data: empresa } = await supabase
       .from("Empresa")
       .select("id")
-      .eq("usuarioId", user.id)
+      .eq("userId", user.id) // Corrigido: o campo no schema Prisma/Supabase é userId
       .single();
+
 
     if (!empresa) {
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
@@ -81,8 +82,9 @@ export async function GET(request: Request) {
     const { data: empresa } = await supabase
       .from("Empresa")
       .select("id")
-      .eq("usuarioId", user.id)
+      .eq("userId", user.id) // Corrigido aqui também
       .single();
+
 
     if (!empresa) {
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
@@ -127,8 +129,9 @@ export async function DELETE(request: Request) {
     const { data: empresa } = await supabase
       .from("Empresa")
       .select("id")
-      .eq("usuarioId", user.id)
+      .eq("userId", user.id) // E aqui
       .single();
+
 
     if (!empresa) {
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });

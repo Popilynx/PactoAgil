@@ -37,49 +37,29 @@ export async function registerAction(formData: FormData) {
 
   const { fullName, email, password, companyName, cnpj, funcionalidade, existingCompanyId, planKey } = validated.data;
 
-  // 1. Criar usuário no Supabase Auth
-  console.log('[registerAction] Tentando criar usuário no Auth:', email);
-  let authData: any = {};
-  let authError: any = null;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[registerAction] Ambiente local detectado. Usando Admin Auth para evitar envio de email.');
-    const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Confirma automaticamente para permitir login
-      user_metadata: {
-        full_name: fullName,
-      }
-    });
-
-    if (adminError) {
-      authError = adminError;
-    } else {
-      authData = { user: adminUser.user };
-      // Importante: No Dev, nós forçamos o login para estabelecer a sessão do usuário
-      console.log('[registerAction] Efetuando signIn automático para gerar os cookies...');
-      await supabase.auth.signInWithPassword({ email, password });
+  // 1. Criar usuário no Supabase Auth (TEMPORARY BYPASS: Sempre cria como confirmado)
+  console.log('[registerAction] Criando usuário com bypass de confirmação:', email);
+  
+  const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true, // Confirma automaticamente para evitar dependência do Resend agora
+    user_metadata: {
+      full_name: fullName,
     }
-  } else {
-    // Em produção, usa o signUp nativo que respeita a configuração de Confirmação de E-mail do Supabase
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        }
-      }
-    });
-    authData = signUpData;
-    authError = signUpError;
+  });
+  
+  if (adminError || !adminUser.user) {
+    console.error('[registerAction] Erro no Admin Auth:', adminError);
+    return { error: adminError?.message || 'Erro ao criar conta' };
   }
+  
+  const authData = { user: adminUser.user };
+  
+  // Efetuando signIn automático para gerar os cookies de sessão no navegador
+  console.log('[registerAction] Efetuando signIn automático...');
+  await supabase.auth.signInWithPassword({ email, password });
 
-  if (authError || !authData.user) {
-    console.error('[registerAction] Erro no Auth:', authError);
-    return { error: authError?.message || 'Erro ao criar conta' };
-  }
 
   const userId = authData.user.id;
   console.log('[registerAction] Usuário criado com sucesso no Auth:', userId);

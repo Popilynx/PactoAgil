@@ -79,26 +79,31 @@ export async function signup(formData: FormData) {
 
   const supabase = await createClient()
 
-  // 1. Criar usuário no Supabase
-  const { data, error } = await supabase.auth.signUp({
+  // 1. Criar usuário no Supabase Auth (TEMPORARY BYPASS)
+  const adminSupabase = createAdminClient();
+  const { data, error } = await adminSupabase.auth.admin.createUser({
     email: email.toLowerCase().trim(),
     password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    email_confirm: true,
+    user_metadata: {
+      full_name: email.split('@')[0],
     }
-  })
+  });
 
-  if (error) {
-    console.error('Signup error:', error.message)
-    return { error: error.message }
+  if (error || !data.user) {
+    console.error('Signup error:', error?.message);
+    return { error: error?.message || 'Erro ao criar conta' };
   }
+
+  // Efetuando signIn automático para gerar os cookies
+  await supabase.auth.signInWithPassword({ email, password });
+
 
   if (data.user) {
     const nomeExibicao = email.split('@')[0];
 
     try {
-      // 2. Criar Perfil inicial (Multi-tenant) via Supabase Admin
-      const adminSupabase = createAdminClient();
+      // 2. Criar Perfil inicial (Multi-tenant)
       await adminSupabase
         .from("Perfil")
         .insert({

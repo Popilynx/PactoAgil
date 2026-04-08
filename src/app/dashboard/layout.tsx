@@ -62,23 +62,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           .from("Perfil")
           .select(`
             nomeCompleto, email, role,
-            Empresa (
+            empresa: Empresa (
               nome,
               logoUrl,
               corPrimaria,
-              Assinatura (tipoPlano)
+              assinatura: Assinatura (tipoPlano)
             )
           `)
           .eq("userId", user.id)
           .single();
 
+
         if (perfil) {
-          const empresa = perfil.Empresa
-            ? (Array.isArray(perfil.Empresa) ? perfil.Empresa[0] : perfil.Empresa)
+          const empresa = perfil.empresa
+            ? (Array.isArray(perfil.empresa) ? perfil.empresa[0] : perfil.empresa)
             : null;
-          const assinatura = empresa?.Assinatura
-            ? (Array.isArray(empresa.Assinatura) ? empresa.Assinatura[0] : empresa.Assinatura)
+          const assinatura = empresa?.assinatura
+            ? (Array.isArray(empresa.assinatura) ? empresa.assinatura[0] : empresa.assinatura)
             : null;
+
 
           setUserProfile({
             nomeCompleto: perfil.nomeCompleto || user.email?.split("@")[0] || "Usuário",
