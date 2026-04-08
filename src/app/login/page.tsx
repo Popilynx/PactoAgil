@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { login, signup } from "./actions";
+import { login } from "./actions";
+import { syncUserSession } from "@/lib/auth-sync";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ROUTES } from "@/constants/routes";
 import { ArrowRight, Lock, CreditCard, Loader2 } from "lucide-react";
@@ -32,15 +33,8 @@ function LoginContent() {
       setError(result.error);
       setLoading(false);
     } else if (result?.success) {
-      try {
-        const meRes = await fetch('/api/me');
-        if (meRes.ok) {
-          const userData = await meRes.json();
-          localStorage.setItem('pacto_user_state', JSON.stringify(userData));
-        }
-      } catch (err) {
-        console.error("Erro ao gravar storage state no login:", err);
-      }
+      // Sincroniza sessão globalmente antes de redirecionar
+      await syncUserSession();
       router.push(ROUTES.PAGES.DASHBOARD.ROOT);
     }
   }

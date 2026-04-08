@@ -5,104 +5,135 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+} as const;
+
+interface UserProfile {
+  name: string | null;
+  role: string | null;
+  company: string | null;
+  plan: string;
+  access_token: string | null;
+}
+
+/**
+ * Extrai e valida o token Bearer do header de autorização.
+ */
+function extractBearerToken(authHeader: string | null): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  return authHeader.slice(7);
+}
+
+/**
+ * Obtém o ID do usuário via token Bearer (admin client).
+ */
+async function getUserIdFromToken(token: string): Promise<string | null> {
+  const adminClient = createAdminClient();
+  const { data: { user }, error } = await adminClient.auth.getUser(token);
+  return error || !user ? null : user.id;
+}
+
+/**
+ * Obtém o ID do usuário da sessão atual (cookies).
+ */
+async function getUserIdFromSession(): Promise<{ userId: string | null; accessToken: string | null }> {
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) return { userId: null, accessToken: null };
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  return { userId: user.id, accessToken: sessionData?.session?.access_token ?? null };
+}
+
+/**
+ * Busca o perfil do usuário no banco de dados.
+ */
+async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+  const perfil = await prisma.perfil.findUnique({
+    where: { userId },
+    include: {
+      empresa: {
+        select: {
+          nome: true,
+          assinatura: {
+            select: { tipoPlano: true }
+          }
+        }
+      }
+    }
+  });
+
+  if (!perfil) return null;
+
+  return {
+    name: perfil.nomeCompleto,
+    role: perfil.role,
+    company: perfil.empresa?.nome ?? null,
+    plan: perfil.empresa?.assinatura?.tipoPlano ?? 'FREE',
+    access_token: null
+  };
+}
+
 /**
  * GET /api/me
- * Retorna as informações completas do usuário ativo (nome, role, plano da empresa e accessToken).
- * É projetado para ser chamado após o login e consumido por clientes externos ou frontends.
+ * Retorna as informações completas do usuário ativo.
  */
 export async function GET(request: NextRequest) {
   try {
-    // 1. Extrai Token de Bearer se fornecido externamente (ex. por webhook ou frontend API)
-    const authHeader = request.headers.get('authorization');
+    const token = extractBearerToken(request.headers.get('authorization'));
     let userId: string | null = null;
-    let fallbackToken: string | null = null;
+    let finalToken: string | null = token;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      fallbackToken = authHeader.substring(7);
-      const adminClient = createAdminClient();
-      const { data: { user }, error } = await adminClient.auth.getUser(fallbackToken);
-      if (!error && user) {
-        userId = user.id;
-      }
+    if (token) {
+      userId = await getUserIdFromToken(token);
     }
 
-    // 2. Se não veio via Auth Header, tentamos ler a sessão do cookie
-    const supabase = await createClient();
     if (!userId) {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user) {
-        userId = user.id;
-      }
+      const sessionData = await getUserIdFromSession();
+      userId = sessionData.userId;
+      finalToken = sessionData.accessToken;
     }
 
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autorizado. Token inválido ou sessão inexistente.' },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
-    // Pega a sessão principal extraída, se existir, para passar no access_token final
-    const { data: sessionData } = await supabase.auth.getSession();
-    const finalToken = fallbackToken || sessionData?.session?.access_token || null;
+    const profile = await fetchUserProfile(userId);
 
-    // 3. Busca o Perfil e as informações da Empresa associada
-    const perfil = await prisma.perfil.findUnique({
-      where: { userId },
-      include: {
-        empresa: {
-          select: {
-            id: true,
-            nome: true,
-            cnpj: true,
-            assinatura: {
-              select: { status: true, tipoPlano: true }
-            }
-          }
-        }
-      }
-    });
-
-    if (!perfil) {
+    if (!profile) {
       return NextResponse.json(
         { error: 'Perfil não encontrado na base de dados.' },
-        { status: 404 }
+        { status: 404, headers: CORS_HEADERS }
       );
     }
 
-    // 4. Retorna a assinatura correta de campos exigida
-    return NextResponse.json({
-      name: perfil.nomeCompleto,
-      role: perfil.role,
-      company: perfil.empresa ? perfil.empresa.nome : null,
-      plan: perfil.empresa?.assinatura?.tipoPlano || 'FREE',
-      access_token: finalToken
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }
-    });
+    console.log(`[API /api/me] Perfil encontrado para user ${userId}. Retornando dados.`);
 
-  } catch (error: any) {
-    console.error('[API /api/me] Erro ao buscar dados:', error.message);
+    return NextResponse.json(
+      { ...profile, access_token: finalToken },
+      { headers: CORS_HEADERS }
+    );
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[API /api/me] Erro crítico:', message);
     return NextResponse.json(
       { error: 'Erro interno no servidor ao processar o perfil.' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
 
 /**
- * Handle OPTIONS for CORS requests preflight
+ * Handle OPTIONS for CORS requests preflight.
  */
-export async function OPTIONS(request: NextRequest) {
-  return NextResponse.json({}, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    }
-  });
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: CORS_HEADERS });
 }

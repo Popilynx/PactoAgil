@@ -1,13 +1,14 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { registerAction } from "./actions";
-import { Loader2, ArrowRight, ShieldCheck, Building2, User2, Search, CheckCircle2, PlusCircle } from "lucide-react";
+import { Loader2, ArrowRight, ShieldCheck, Building2, User2, CheckCircle2, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { formatCNPJ } from "@/lib/validation/schemas";
 import { ROUTES } from "@/constants/routes";
+import { syncUserSession } from "@/lib/auth-sync";
 
 import { useDebounce, useAsyncState } from "@/lib/hooks";
 
@@ -80,13 +81,13 @@ function RegisterForm() {
   // Lógica de Registro encapsulada para useAsyncState
   const { state: registrationState, execute: runRegistration, isLoading } = useAsyncState(async (formData: FormData) => {
     const result = await registerAction(formData);
-    if (result?.error) throw new Error(result.error);
+    if ('error' in result) throw new Error(result.error);
     return result;
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     const formData = new FormData(e.currentTarget);
     if (selectedCompany) {
       formData.set("existingCompanyId", selectedCompany.id);
@@ -96,8 +97,16 @@ function RegisterForm() {
       formData.set("companyName", manualCompanyName);
       formData.set("cnpj", manualCnpj);
     }
-    
-    await runRegistration(formData);
+
+    const result = await runRegistration(formData);
+
+    // Se o registro for bem-sucedido, sincronizamos a sessão antes de redirecionar
+    if (result && 'success' in result) {
+      await syncUserSession();
+      if (result.redirect) {
+        router.push(result.redirect);
+      }
+    }
   };
 
   return (
