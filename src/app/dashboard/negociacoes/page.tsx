@@ -3,7 +3,9 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { 
+
   Building2, 
   Filter, 
   Plus, 
@@ -45,7 +47,11 @@ function NegociacoesContent() {
   const fetchNegotiations = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/negotiations");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/negotiations", {
+        headers: { "Authorization": `Bearer ${session?.access_token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setNegotiations(data);
@@ -57,11 +63,17 @@ function NegociacoesContent() {
     }
   };
 
+
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta negociação?")) return;
     
     try {
-      const res = await fetch(`/api/negotiations?id=${id}`, { method: "DELETE" });
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/negotiations?id=${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${session?.access_token}` }
+      });
       if (res.ok) {
         setNegotiations(negotiations.filter(n => n.id !== id));
       }
@@ -69,6 +81,7 @@ function NegociacoesContent() {
       console.error("Erro ao deletar:", err);
     }
   };
+
 
   const filtered = negotiations.filter(item => {
     const matchesSearch = 

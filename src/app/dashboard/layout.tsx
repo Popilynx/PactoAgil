@@ -61,37 +61,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const { data: perfil } = await supabase
           .from("Perfil")
           .select(`
-            nomeCompleto, email, role,
-            empresa: Empresa (
-              nome,
-              logoUrl,
-              corPrimaria,
-              assinatura: Assinatura (tipoPlano)
-            )
+            nomeCompleto, email, role, empresaId
           `)
           .eq("userId", user.id)
           .single();
 
-
         if (perfil) {
-          const empresa = perfil.empresa
-            ? (Array.isArray(perfil.empresa) ? perfil.empresa[0] : perfil.empresa)
-            : null;
-          const assinatura = empresa?.assinatura
-            ? (Array.isArray(empresa.assinatura) ? empresa.assinatura[0] : empresa.assinatura)
-            : null;
+          // Buscar empresa separadamente para evitar ambiguidade de FK no PostgREST
+          const empresaId = perfil.empresaId;
+          let empresaNome = "Sem empresa";
+          let logoUrl: string | undefined;
+          let corPrimaria: string | undefined;
+          let tipoPlano = "SEM PLANO";
 
+          if (empresaId) {
+            const { data: empresa } = await supabase
+              .from("Empresa")
+              .select(`nome, logoUrl, corPrimaria, Assinatura (tipoPlano)`)
+              .eq("id", empresaId)
+              .single();
+
+            if (empresa) {
+              empresaNome = empresa.nome || "Sem empresa";
+              logoUrl = empresa.logoUrl || undefined;
+              corPrimaria = empresa.corPrimaria || undefined;
+              const assinatura = empresa.Assinatura
+                ? (Array.isArray(empresa.Assinatura) ? empresa.Assinatura[0] : empresa.Assinatura)
+                : null;
+              tipoPlano = assinatura?.tipoPlano || "SEM PLANO";
+            }
+          }
 
           setUserProfile({
             nomeCompleto: perfil.nomeCompleto || user.email?.split("@")[0] || "Usuário",
             email: perfil.email || user.email || "",
             role: perfil.role || "USER",
-            empresaNome: empresa?.nome || "Sem empresa",
-            plano: assinatura?.tipoPlano || "SEM PLANO",
-            logoUrl: empresa?.logoUrl || undefined,
-            corPrimaria: empresa?.corPrimaria || undefined,
+            empresaNome,
+            plano: tipoPlano,
+            logoUrl,
+            corPrimaria,
           });
         }
+
       } catch (err) {
         console.error("[DashboardLayout] Erro ao buscar perfil:", err);
       }
