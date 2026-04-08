@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * Extrai o userId do header injetado pelo middleware.
@@ -17,30 +18,59 @@ export function getUserIdFromRequest(request: NextRequest | Request): string | n
 }
 
 /**
- * Verifica autenticação lendo cookies via Supabase Server Client.
- * Muito mais robusto em produção (Vercel) pois não depende de headers 
- * injetados por Middleware que podem ser descartados.
+ * Extrai o token Bearer do cabeçalho de autorização.
+ */
+function extractBearerToken(request?: NextRequest | Request): string | null {
+  if (!request) return null;
+  
+  const headers = request instanceof NextRequest 
+    ? request.headers 
+    : new Headers((request as Request).headers);
+    
+  const authHeader = headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  
+  return authHeader.slice(7);
+}
+
+/**
+ * Verifica autenticação via Cookies ou Header Authorization.
+ * Muito mais robusto em produção (Vercel) pois suporta fallback para tokens manuais.
  * 
  * Uso em API routes: const result = await requireAuth(request); if (result instanceof NextResponse) return result;
  */
 export async function requireAuth(request?: NextRequest | Request): Promise<string | NextResponse> {
   try {
+    // 1. Tentar via Cookies (padrão Supabase)
     const supabase = await createClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error: sessionError } = await supabase.auth.getUser();
     
-    if (error || !user) {
-      return NextResponse.json(
-        { error: 'Não autorizado. Faça login novamente.' },
-        { status: 401 }
-      );
+    if (user && !sessionError) {
+      return user.id;
+    }
+
+    // 2. Fallback: Tentar via Header Authorization (Bearer Token)
+    const token = extractBearerToken(request);
+    if (token) {
+      const adminClient = createAdminClient();
+      const { data: { user: tokenUser }, error: tokenError } = await adminClient.auth.getUser(token);
+      
+      if (tokenUser && !tokenError) {
+        return tokenUser.id;
+      }
     }
     
-    return user.id;
+    // Se ambos falharem
+    return NextResponse.json(
+      { error: 'Não autorizado. Faça login novamente.' },
+      { status: 401 }
+    );
   } catch (err) {
-    console.error('[requireAuth] Erro ao validar token:', err);
+    console.error('[requireAuth] Erro crítico ao validar autenticação:', err);
     return NextResponse.json(
       { error: 'Erro de autenticação interna.' },
       { status: 500 }
     );
   }
 }
+

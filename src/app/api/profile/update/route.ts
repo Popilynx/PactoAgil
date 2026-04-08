@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth-helpers';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireAuth();
+  const authResult = await requireAuth(request);
   
   if (authResult instanceof NextResponse) {
     return authResult; // 401
