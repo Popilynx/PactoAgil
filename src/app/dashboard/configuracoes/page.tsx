@@ -204,11 +204,21 @@ export default function ConfiguracoesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+      <div className="space-y-6 animate-pulse">
+        <section className="section-shell p-8 h-48 bg-surface/20 border-border-soft flex flex-col justify-end gap-4">
+          <div className="w-32 h-6 bg-surface-dim rounded-full" />
+          <div className="w-1/2 h-12 bg-surface-dim rounded-2xl" />
+        </section>
+        <section className="section-shell p-4 h-20 bg-surface/20 border-border-soft flex gap-2">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="w-32 h-10 bg-surface-dim rounded-full" />
+          ))}
+        </section>
+        <section className="section-shell p-8 h-96 bg-surface/20 border-border-soft" />
       </div>
     );
   }
+
 
   const planoAtual = profile?.assinatura?.tipoPlano || "SEM PLANO";
   const planoInfo = PLAN_INFO[planoAtual];

@@ -124,25 +124,42 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Perfil do Usuário */}
-        {userProfile && (
-          <div className="px-4 py-4 border-b border-border-soft">
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-dim/50 border border-border-soft">
-              <div className="w-10 h-10 rounded-xl bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
-                <User className="w-5 h-5 text-accent" />
+        <div className="px-4 py-4 border-b border-border-soft min-h-[120px]">
+          {userProfile ? (
+            <>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-dim/50 border border-border-soft">
+                <div className="w-10 h-10 rounded-xl bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">{userProfile.nomeCompleto}</p>
+                  <p className="text-[0.65rem] text-foreground/50 truncate">{userProfile.email}</p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold truncate">{userProfile.nomeCompleto}</p>
-                <p className="text-[0.65rem] text-foreground/50 truncate">{userProfile.email}</p>
+              <div className="flex items-center gap-2 mt-3 px-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="text-[0.6rem] font-mono uppercase tracking-[0.15em] text-accent truncate">
+                  {userProfile.plano} &bull; {userProfile.empresaNome}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="animate-pulse">
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-dim/30 border border-border-soft/50">
+                <div className="w-10 h-10 rounded-xl bg-surface-dim shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 bg-surface-dim rounded" />
+                  <div className="h-3 w-1/2 bg-surface-dim/50 rounded" />
+                </div>
+              </div>
+              <div className="mt-3 px-1 flex items-center gap-2">
+                <div className="w-3.5 h-3.5 rounded bg-surface-dim/50" />
+                <div className="h-3 w-2/3 bg-surface-dim/30 rounded" />
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-3 px-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span className="text-[0.6rem] font-mono uppercase tracking-[0.15em] text-accent truncate">
-                {userProfile.plano} &bull; {userProfile.empresaNome}
-              </span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
+
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {

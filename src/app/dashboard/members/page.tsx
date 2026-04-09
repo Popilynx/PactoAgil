@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth-helpers";
+
+export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import { Users, Shield, Mail, BadgeCheck, Zap, Info } from "lucide-react";
 import { InviteMemberButton } from "./InviteMemberButton";
