@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { ROUTES } from '@/constants/routes'
 
+// LISTA DE BYPASS PARA TESTES (DEVE SER IGUAL À DO auth-helpers.ts)
+const BYPASS_EMAILS = [
+  'contato@cursoecertificado.com.br',
+  'renato@starwars1.com.br'
+];
+
 export async function updateSession(request: NextRequest) {
   // Clonar headers para modificar
   const requestHeaders = new Headers(request.headers)

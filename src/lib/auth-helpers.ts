@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import prisma from '@/lib/prisma'; // Importado para lookup de bypass
+
+// LISTA DE BYPASS PARA TESTES (REMOVER EM PRODUÇÃO)
+const BYPASS_EMAILS = [
+  'contato@cursoecertificado.com.br',
+  'renato@starwars1.com.br'
+];
 
 /**
  * Extrai o userId do header injetado pelo middleware.

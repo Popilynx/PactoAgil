@@ -118,6 +118,29 @@ export async function GET(request: NextRequest) {
       finalToken = sessionData.accessToken;
     }
 
+    // =========================================================================
+    // CAMADA DE BYPASS PARA TESTES (REMOVER EM PRODUÇÃO)
+    // =========================================================================
+    if (!userId) {
+      const BYPASS_EMAILS = [
+        'contato@cursoecertificado.com.br',
+        'renato@starwars1.com.br'
+      ];
+      const bypassEmail = request.headers.get('x-bypass-email');
+      
+      if (bypassEmail && BYPASS_EMAILS.includes(bypassEmail)) {
+        console.warn(`[API /api/me][TEST-BYPASS] Identificando usuário via bypass: ${bypassEmail}`);
+        const userFound = await prisma.perfil.findUnique({
+          where: { email: bypassEmail },
+          select: { userId: true }
+        });
+        if (userFound) {
+          userId = userFound.userId;
+        }
+      }
+    }
+    // =========================================================================
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autorizado. Token inválido ou sessão inexistente.' },
