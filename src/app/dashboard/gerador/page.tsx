@@ -104,6 +104,7 @@ function GeradorContent() {
   const [extractedFields, setExtractedFields] = useState<ExtractedField[]>([]);
   const [negotiationId, setNegotiationId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<ExtractedField | null>(null);
+  const [documentTitle, setDocumentTitle] = useState("Nova Negociação");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { getAuthHeaders } = useAuthToken();
 
@@ -180,7 +181,7 @@ function GeradorContent() {
 
         body: JSON.stringify({
           id: negotiationId,
-          titulo: "Negociação - " + new Date().toLocaleDateString("pt-BR"),
+          titulo: documentTitle || "Nova Negociação",
           clausulas: extractedFields,
           minuta: draftContent,
           status: "RASCUNHO",
@@ -224,41 +225,6 @@ function GeradorContent() {
     export: async () => {
       const lines = draftText.split("\n");
       const paragraphs: any[] = [];
-
-      // Header
-      paragraphs.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 200 },
-          children: [
-            new TextRun({
-              text: "PACTO ÁGIL",
-              bold: true,
-              size: 20,
-              color: "666666",
-              font: "Calibri",
-            }),
-          ],
-        })
-      );
-
-      paragraphs.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 400 },
-          border: {
-            bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-          },
-          children: [
-            new TextRun({
-              text: "Sistema de Gestão de Negociações Coletivas",
-              size: 18,
-              color: "999999",
-              font: "Calibri",
-            }),
-          ],
-        })
-      );
 
       for (const line of lines) {
         const trimmed = line.trim();
@@ -313,23 +279,6 @@ function GeradorContent() {
         }
       }
 
-      // Rodapé
-      paragraphs.push(
-        new Paragraph({
-          spacing: { before: 600 },
-          border: { top: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
-          alignment: AlignmentType.CENTER,
-          children: [
-            new TextRun({
-              text: `Gerado por Pacto Ágil em ${new Date().toLocaleDateString("pt-BR")}`,
-              size: 16,
-              color: "AAAAAA",
-              font: "Calibri",
-            }),
-          ],
-        })
-      );
-
       const doc = new Document({
         sections: [
           {
@@ -346,8 +295,9 @@ function GeradorContent() {
       const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
+      const safeTitle = (documentTitle || "minuta").toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       a.href = url;
-      a.download = `minuta-pacto-agil-${new Date().toISOString().split("T")[0]}.docx`;
+      a.download = `${safeTitle}-${new Date().toISOString().split("T")[0]}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -664,12 +614,18 @@ function GeradorContent() {
 
         {/* Minuta Viva */}
         <article className="section-shell p-6 md:p-8 min-h-[66vh] flex flex-col">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-soft/50">
-            <h2 className="text-2xl font-semibold inline-flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-surface-dim border border-border-soft">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b border-border-soft/50 gap-4">
+            <h2 className="text-2xl font-semibold inline-flex items-center gap-3 w-full md:w-auto flex-1">
+              <div className="p-2.5 rounded-xl bg-surface-dim border border-border-soft shrink-0">
                 <FileText className="h-5 w-5 text-foreground/80" />
               </div>
-              Minuta Draft
+              <input 
+                type="text" 
+                value={documentTitle} 
+                onChange={(e) => setDocumentTitle(e.target.value)}
+                placeholder="Título do Documento"
+                className="bg-transparent border-none font-semibold focus:outline-none focus:ring-0 w-full text-xl md:text-2xl placeholder:opacity-40"
+              />
             </h2>
             {draftContent && (
               <span className="text-[0.65rem] font-mono uppercase font-bold tracking-[0.15em] text-accent flex items-center gap-2 rounded-full px-3 py-1 bg-accent/10 border border-accent/20">

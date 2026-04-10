@@ -15,6 +15,7 @@ export const ROUTES = {
       GENERATOR: '/dashboard/gerador',
       NEGOTIATIONS: '/dashboard/negociacoes',
       MEMBERS: '/dashboard/members',
+      CALENDAR: '/dashboard/calendario',
     },
     CHECKOUT: {
       SUCCESS: '/checkout/success',

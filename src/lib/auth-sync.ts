@@ -17,10 +17,20 @@ export const AUTH_KEYS = {
   ACCESS_TOKEN: 'pacto_access_token',
 };
 
+let syncPromise: Promise<UserState | null> | null = null;
+let lastSyncTime = 0;
+
 /**
- * Busca os dados do usuário atual e os persiste no LocalStorage.
+ * Busca os dados do usuário atual e os persiste no LocalStorage (deduplicado).
  */
-export async function syncUserSession(): Promise<UserState | null> {
+export async function syncUserSession(force = false): Promise<UserState | null> {
+  const now = Date.now();
+  if (!force && syncPromise && (now - lastSyncTime < 5000)) {
+    console.log('[auth-sync] Usando cache do sincronizador (evitando loop).');
+    return syncPromise;
+  }
+
+  syncPromise = (async () => {
   try {
     console.log('[auth-sync] Iniciando sincronização via /api/me...');
     const token = localStorage.getItem(AUTH_KEYS.ACCESS_TOKEN);
@@ -54,10 +64,13 @@ export async function syncUserSession(): Promise<UserState | null> {
 
     console.log('[auth-sync] Dados do usuário sincronizados.');
     return data;
-  } catch (err) {
+  })().catch(err => {
     console.error('[auth-sync] Erro crítico na sincronização:', err);
     return null;
-  }
+  });
+
+  lastSyncTime = now;
+  return syncPromise;
 }
 
 /**

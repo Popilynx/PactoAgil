@@ -29,7 +29,7 @@ export function useUser() {
   // Função para forçar atualização via API
   const refresh = useCallback(async () => {
     setLoading(true);
-    const data = await syncUserSession();
+    const data = await syncUserSession(true);
     if (data) {
       setUser(data);
     }

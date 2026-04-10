@@ -103,15 +103,28 @@ export function Protocol() {
 
               <div className="rounded-[1.6rem] border border-border-soft bg-surface-dim p-5 flex items-center justify-center overflow-hidden">
                 {step.visual === "rings" ? (
-                  <div className="relative w-full h-full">
-                    <Image 
-                      src="/step-01.png" 
-                      alt={step.title} 
-                      fill 
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover rounded-[1.2rem] brightness-90 contrast-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                  <div className="relative w-full h-full flex items-center justify-center bg-slate-950 rounded-[1.2rem] overflow-hidden">
+                    {/* Efeitos de anéis (Rings) */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-[120%] aspect-square rounded-full border border-primary/10 absolute animate-[spin_10s_linear_infinite]" />
+                      <div className="w-[90%] aspect-square rounded-full border border-primary/20 absolute animate-[spin_15s_linear_infinite_reverse]" />
+                      <div className="w-[60%] aspect-square rounded-full border border-primary/30 absolute animate-[pulse_3s_ease-in-out_infinite]" />
+                    </div>
+                    {/* Brilho no fundo */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/20 blur-[50px]" />
+                    
+                    {/* Logo */}
+                    <div className="relative z-10 drop-shadow-lg hover:scale-105 transition-transform duration-500">
+                      <Image 
+                        src="/logo-pacto-agil-new.png" 
+                        alt="Logo Pacto Ágil" 
+                        width={180} 
+                        height={60} 
+                        className="object-contain invert dark:invert"
+                        priority
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent pointer-events-none" />
                   </div>
                 ) : null}
 

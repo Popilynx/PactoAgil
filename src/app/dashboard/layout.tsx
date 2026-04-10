@@ -16,6 +16,9 @@ import {
   Users,
   User,
   ShieldCheck,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ROUTES } from "@/constants/routes";
@@ -24,8 +27,9 @@ import { ROUTES } from "@/constants/routes";
 const navItems = [
   { href: ROUTES.PAGES.DASHBOARD.ROOT, label: "Painel de Controle", icon: LayoutDashboard },
   { href: ROUTES.PAGES.DASHBOARD.NEGOTIATIONS, label: "Negociações", icon: Building2 },
-  { href: ROUTES.PAGES.DASHBOARD.GENERATOR, label: "Gerador Inteligente", icon: WandSparkles },
-  { href: ROUTES.PAGES.DASHBOARD.MEMBERS, label: "Minha Equipe", icon: Users },
+  { href: ROUTES.PAGES.DASHBOARD.CALENDAR, label: "Calendário", icon: Calendar },
+  { href: ROUTES.PAGES.DASHBOARD.GENERATOR, label: "Nova Negociação", icon: WandSparkles },
+  { href: ROUTES.PAGES.DASHBOARD.MEMBERS, label: "Diretores", icon: Users },
   { href: ROUTES.PAGES.DASHBOARD.CONFIG, label: "Configurações", icon: Settings },
 ];
 
@@ -42,6 +46,7 @@ interface UserProfile {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -73,7 +78,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     fetchProfile();
   }, []);
 
-  const SidebarContent = () => {
+  const SidebarContent = ({ collapsed = false, onToggleCollapse }: { collapsed?: boolean, onToggleCollapse?: () => void }) => {
     const [isPortalLoading, setIsPortalLoading] = useState(false);
 
     const handlePortal = async () => {
@@ -110,38 +115,58 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
     return (
       <>
-        <div className="px-6 py-6 border-b border-border-soft flex items-center justify-between">
-          <div>
-            <BrandLogo href={ROUTES.PAGES.DASHBOARD.ROOT} src={userProfile?.logoUrl} />
-            <p className="mt-3 text-xs font-mono uppercase tracking-[0.14em] text-foreground/60">Workspace Sindical</p>
+        <div className={`px-6 py-6 border-b border-border-soft flex items-center justify-between ${collapsed ? 'justify-center px-2' : ''}`}>
+          {!collapsed && (
+            <div>
+              <BrandLogo href={ROUTES.PAGES.DASHBOARD.ROOT} src={userProfile?.logoUrl} />
+              <p className="mt-3 text-xs font-mono uppercase tracking-[0.14em] text-foreground/60">Workspace Sindical</p>
+            </div>
+          )}
+          {collapsed && (
+            <BrandLogo href={ROUTES.PAGES.DASHBOARD.ROOT} src={userProfile?.logoUrl} compact />
+          )}
+          <div className="flex items-center gap-2">
+            {onToggleCollapse && (
+              <button 
+                onClick={onToggleCollapse} 
+                className="hidden lg:flex p-1.5 text-foreground/60 hover:text-accent bg-surface-dim hover:bg-accent/10 border border-border-soft hover:border-accent/30 rounded-lg transition-all shadow-sm"
+                title={collapsed ? "Expandir" : "Recolher"}
+              >
+                {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            )}
+            <button 
+              onClick={toggleMobileMenu} 
+              className="lg:hidden p-2 text-foreground/80 hover:bg-surface-dim rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button 
-            onClick={toggleMobileMenu} 
-            className="lg:hidden p-2 text-foreground/80 hover:bg-surface-dim rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Perfil do Usuário */}
-        <div className="px-4 py-4 border-b border-border-soft min-h-[120px]">
+        <div className={`px-4 py-4 border-b border-border-soft ${collapsed ? 'min-h-[80px]' : 'min-h-[120px]'}`}>
           {userProfile ? (
             <>
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-dim/50 border border-border-soft">
+              <div className={`flex items-center gap-3 p-3 rounded-2xl bg-surface-dim/50 border border-border-soft ${collapsed ? 'justify-center' : ''}`}>
                 <div className="w-10 h-10 rounded-xl bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-accent" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate">{userProfile.nomeCompleto}</p>
-                  <p className="text-[0.65rem] text-foreground/50 truncate">{userProfile.email}</p>
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{userProfile.nomeCompleto}</p>
+                    <p className="text-[0.65rem] text-foreground/50 truncate">{userProfile.email}</p>
+                  </div>
+                )}
+              </div>
+              {!collapsed && (
+                <div className="flex items-center gap-2 mt-3 px-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-accent shrink-0" />
+                  <span className="text-[0.6rem] font-mono uppercase tracking-[0.15em] text-accent truncate">
+                    {userProfile.plano} &bull; {userProfile.empresaNome}
+                  </span>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 mt-3 px-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-accent shrink-0" />
-                <span className="text-[0.6rem] font-mono uppercase tracking-[0.15em] text-accent truncate">
-                  {userProfile.plano} &bull; {userProfile.empresaNome}
-                </span>
-              </div>
+              )}
             </>
           ) : (
             <div className="animate-pulse">
@@ -164,45 +189,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== ROUTES.PAGES.DASHBOARD.ROOT);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold hover-lift transition-all duration-200 ${
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-4'} rounded-xl py-3 text-sm font-semibold hover-lift transition-all duration-200 ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : "text-foreground/80 hover:bg-surface-dim"
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <Icon className="h-5 w-5 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-border-soft space-y-3">
+        <div className={`p-4 border-t border-border-soft space-y-3 ${collapsed ? 'px-2' : ''}`}>
           <button
             onClick={handlePortal}
             disabled={isPortalLoading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent/10 border border-accent/20 py-2.5 text-sm font-semibold text-accent hover:bg-accent/20 transition-all disabled:opacity-50 cursor-pointer"
+            title={collapsed ? "Gerenciar Assinatura" : undefined}
+            className={`w-full inline-flex items-center justify-center ${collapsed ? 'gap-0 p-2.5' : 'gap-2 py-2.5'} rounded-xl bg-accent/10 border border-accent/20 text-sm font-semibold text-accent hover:bg-accent/20 transition-all disabled:opacity-50 cursor-pointer`}
           >
             {isPortalLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0" />
             ) : (
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className="h-5 w-5 shrink-0" />
             )}
-            Gerenciar Assinatura
+            {!collapsed && <span>Gerenciar Assinatura</span>}
           </button>
 
           <Link
             href={ROUTES.PAGES.AUTH.SIGNOUT}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-surface border border-border-soft py-2.5 text-sm font-semibold hover:bg-surface-dim transition-colors"
+            title={collapsed ? "Sair" : undefined}
+            className={`w-full inline-flex items-center justify-center ${collapsed ? 'gap-0 p-2.5' : 'gap-2 py-2.5'} rounded-xl bg-surface border border-border-soft text-sm font-semibold hover:bg-surface-dim transition-colors`}
           >
-            <LogOut className="h-4 w-4" />
-            Sair
+            <LogOut className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Sair</span>}
           </Link>
         </div>
       </>
@@ -222,8 +250,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }
       `}} />
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-72 border-r border-border-soft bg-surface/90 backdrop-blur-xl flex-col sticky top-0 h-screen z-30">
-        <SidebarContent />
+      <aside className={`hidden lg:flex transition-all duration-300 ease-in-out border-r border-border-soft bg-surface/90 backdrop-blur-xl flex-col sticky top-0 h-screen z-30 ${isSidebarCollapsed ? 'w-24' : 'w-72'}`}>
+        <SidebarContent collapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
       </aside>
 
       {/* Mobile Drawer Overlay */}

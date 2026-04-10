@@ -87,14 +87,14 @@ export async function signup(formData: FormData) {
 
   const supabase = await createClient()
 
-  // 1. Criar usuário no Supabase Auth (TEMPORARY BYPASS)
-  const adminSupabase = createAdminClient();
-  const { data, error } = await adminSupabase.auth.admin.createUser({
+  // 1. Criar usuário no Supabase Auth
+  const { data, error } = await supabase.auth.signUp({
     email: email.toLowerCase().trim(),
     password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: email.split('@')[0],
+    options: {
+      data: {
+        full_name: email.split('@')[0],
+      }
     }
   });
 
@@ -103,37 +103,28 @@ export async function signup(formData: FormData) {
     return { error: error?.message || 'Erro ao criar conta' };
   }
 
-  // Efetuando signIn automático para gerar os cookies
-  await supabase.auth.signInWithPassword({ email, password });
-
-
-  if (data.user) {
-    const nomeExibicao = email.split('@')[0];
-
-    try {
-      // 2. Criar Perfil inicial (Multi-tenant)
-      await adminSupabase
-        .from("Perfil")
-        .insert({
-          userId: data.user.id,
-          email: email.toLowerCase().trim(),
-          nomeCompleto: nomeExibicao,
-          role: 'ADMIN',
-          criadoEm: new Date(),
-          atualizadoEm: new Date(),
-        });
-
-      // Se houver plano, redireciona direto para o checkout (com bypass de login manual)
-      if (plan && plan !== "") {
-        // Redireciona para o checkout passando o plano via GET
-        return redirect(`${ROUTES.API.CHECKOUT.ROOT}?planKey=${plan}`);
-      }
-
-    } catch (dbError) {
-      console.error('Critical Signup Data Error:', dbError);
-    }
+  // Criação de perfil no DB, independentemente se a conta está ativa ou pendente
+  const nomeExibicao = email.split('@')[0];
+  const adminSupabase = createAdminClient();
+  
+  try {
+    await adminSupabase
+      .from("Perfil")
+      .insert({
+        userId: data.user.id,
+        email: email.toLowerCase().trim(),
+        nomeCompleto: nomeExibicao,
+        role: 'ADMIN',
+        criadoEm: new Date(),
+        atualizadoEm: new Date(),
+      });
+  } catch (dbError) {
+    console.error('Critical Signup Data Error:', dbError);
   }
 
-  // Comportamento padrão sem plano: Aviso de e-mail (Legacy)
+  // Se houver plano, guardamos essa intenção (ex: via session/cookie) ou deixamos para o login pós_email
+  // ... Para manter simples, enviamos apenas ao login
+
+  // Comportamento padrão sem plano: Aviso de e-mail (Verificação Ativa do Supabase)
   redirect(`${ROUTES.PAGES.AUTH.LOGIN}?message=Sucesso! Verifique seu e-mail para ativar sua conta.`)
 }

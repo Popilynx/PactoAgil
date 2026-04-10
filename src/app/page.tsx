@@ -39,7 +39,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative text-foreground selection:bg-accent selection:text-accent-foreground">
+    <main className="relative w-full overflow-x-hidden text-foreground selection:bg-accent selection:text-accent-foreground">
       <nav
         ref={navRef}
         className={`fixed top-5 left-1/2 -translate-x-1/2 z-[60] w-[min(1120px,92%)] rounded-full px-5 py-3 border transition-all duration-500 flex items-center justify-between group ${

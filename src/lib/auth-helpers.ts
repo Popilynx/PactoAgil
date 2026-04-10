@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import prisma from '@/lib/prisma'; // Importado para lookup de bypass
-
-import { BYPASS_EMAILS } from '@/constants/auth';
 import { headers, cookies } from 'next/headers';
-
-/**
- * Decodifica um JWT sem verificar a assinatura (apenas para bypass de testes).
- */
-function decodeJWTSafe(token: string) {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-    return payload;
-  } catch (err) {
-    return null;
-  }
-}
-
 /**
  * Extrai o userId do header injetado pelo middleware.
  */
@@ -70,26 +52,6 @@ export async function requireAuth(request?: NextRequest | Request): Promise<stri
       : request ? new Headers(request.headers) : null;
 
     const userIdHeader = headers?.get('x-user-id');
-    const bypassEmailHeader = headers?.get('x-bypass-email');
-
-    // 2. Camada de BYPASS (Prioridade Máxima)
-    let email = bypassEmailHeader || '';
-    
-    // Fallback para cookie se o header estiver vazio
-    if (!email) {
-      const cookieStore = await cookies();
-      email = cookieStore.get('pacto-bypass-email')?.value || '';
-    }
-
-    if (email && BYPASS_EMAILS.includes(email)) {
-      console.log(`[requireAuth][TEST-BYPASS] Sucesso: Bypass ativo para ${email}`);
-      const profile = await prisma.perfil.findUnique({
-        where: { email },
-        select: { userId: true }
-      });
-      // Retornar o ID do perfil ou um ID de teste fixo para não deslogar
-      return profile?.userId || `test-id-${email.split('@')[0]}`;
-    }
 
     // 3. Header de ID Real (injetado pelo middleware para sessões autênticas)
     if (userIdHeader && userIdHeader !== 'test-bypass-active') {
@@ -151,39 +113,7 @@ export async function requireAuth(request?: NextRequest | Request): Promise<stri
        console.log('[requireAuth][v3-fetch] Info: Nenhum token Bearer encontrado nos headers.');
     }
 
-    // =========================================================================
-    // CAMADA DE BYPASS AUTOMÁTICO PARA TESTES (REMOVER EM PRODUÇÃO)
-    // =========================================================================
-    let bypassEmail = request instanceof NextRequest 
-      ? request.headers.get('x-bypass-email') 
-      : (request as Request).headers?.get?.('x-bypass-email');
 
-    // Se no header não veio o email, tentamos extrair do token enviado
-    if (!bypassEmail && token) {
-      const payload = decodeJWTSafe(token);
-      if (payload && payload.email) {
-        bypassEmail = payload.email;
-        console.log(`[requireAuth][TEST-BYPASS] Detectado email ${bypassEmail} dentro do token.`);
-      }
-    }
-
-    if (bypassEmail && BYPASS_EMAILS.includes(bypassEmail)) {
-      console.warn(`[requireAuth][TEST-BYPASS] ALERTA: Autenticação ignorada para: ${bypassEmail}`);
-      try {
-        const profile = await prisma.perfil.findUnique({
-          where: { email: bypassEmail },
-          select: { userId: true }
-        });
-
-        if (profile) {
-          console.log(`[requireAuth][TEST-BYPASS] Sucesso: Acesso liberado para ${profile.userId}`);
-          return profile.userId;
-        }
-      } catch (dbErr) {
-        console.error('[requireAuth][TEST-BYPASS] Erro ao buscar perfil:', dbErr);
-      }
-    }
-    // =========================================================================
 
     // Fallback Final: Todas as camadas falharam
     console.error('[requireAuth][v3-fetch] CRÍTICO: Todas as camadas de autenticação falharam (Header, Cookie, Bearer).');
@@ -211,36 +141,6 @@ export async function getServerUser(): Promise<string | null> {
     
     // 1. Verificar Headers do Middleware
     const userIdHeader = headerList.get('x-user-id');
-    const bypassEmailHeader = headerList.get('x-bypass-email');
-
-    // 2. Fallback para Cookies (Crucial para transições client-side no Vercel Edge)
-    const bypassEmailCookie = cookieStore.get('pacto-bypass-email')?.value;
-    
-    const bypassEmail = bypassEmailHeader || bypassEmailCookie;
-
-    console.log(`[getServerUser] Diagnóstico - HeaderID: ${userIdHeader}, HeaderBypass: ${bypassEmailHeader}, CookieBypass: ${bypassEmailCookie}`);
-
-    // LOGICA DE BYPASS (TESTES)
-    if (bypassEmail && BYPASS_EMAILS.includes(bypassEmail)) {
-      try {
-        const profile = await prisma.perfil.findUnique({
-          where: { email: bypassEmail },
-          select: { userId: true }
-        });
-        
-        if (profile) {
-          console.log(`[getServerUser] Bypass Ativo (Perfil): ${profile.userId}`);
-          return profile.userId;
-        }
-      } catch (dbErr) {
-        console.error('[getServerUser] Erro ao buscar perfil prisma:', dbErr);
-      }
-      
-      // FALLBACK MÁXIMO: Se o bypass é válido por e-mail, não redirecionamos mesmo se o prisma falhar
-      const testId = `test-id-${bypassEmail.split('@')[0]}`;
-      console.warn(`[getServerUser] Usando Fallback de Teste: ${testId}`);
-      return testId;
-    }
 
     // LOGICA DE SESSÃO REAL
     if (userIdHeader && userIdHeader !== 'test-bypass-active') {

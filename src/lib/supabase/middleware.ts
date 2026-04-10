@@ -95,65 +95,12 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 2.5 Camada de Bypass Automático para Testes
-  // Se ainda não houver usuário, tenta extrair do token Bearer sem validar assinatura
-  if (!user) {
-    const authHeader = request.headers.get('authorization')
-    // 2. Lógica de BYPASS para Testes
-    const url = new URL(request.url);
-    const emailParam = url.searchParams.get('email');
-    
-    let bypassEmail = request.headers.get('x-bypass-email') || 
-                     request.cookies.get('pacto-bypass-email')?.value ||
-                     emailParam;
 
-    // Tentar extrair do token se houver (fallback)
-    if (!bypassEmail && authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.slice(7).trim();
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload && payload.email) {
-          bypassEmail = payload.email;
-        }
-      } catch (e) { /* ignore */ }
-    }
-    
-    if (bypassEmail && BYPASS_EMAILS.includes(bypassEmail)) {
-      console.warn(`[Middleware][TEST-BYPASS] Acesso automático liberado para: ${bypassEmail}`);
-      requestHeaders.set('x-user-id', 'test-bypass-active');
-      requestHeaders.set('x-user-email', bypassEmail);
-      requestHeaders.set('x-bypass-email', bypassEmail);
-
-      supabaseResponse = NextResponse.next({
-        request: {
-          ...request,
-          headers: requestHeaders,
-        },
-      });
-
-      // Persistir o e-mail de bypass em um cookie para que chamadas subsequentes do cliente (fetch) 
-      // também sejam identificadas pelo middleware.
-      supabaseResponse.cookies.set('pacto-bypass-email', bypassEmail, {
-        path: '/',
-        maxAge: 60 * 60 * 24, // 1 dia
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
-      
-      user = { id: 'test-bypass-active', email: bypassEmail } as any;
-    }
-  }
 
   // 3. Injeta headers personalizados para as API routes
   if (user) {
     requestHeaders.set('x-user-id', user.id)
     requestHeaders.set('x-user-email', user.email || '')
-    
-    // Se for bypass, garantir que o header x-bypass-email também esteja presente
-    if (user.id === 'test-bypass-active' && user.email) {
-      requestHeaders.set('x-bypass-email', user.email);
-    }
   }
 
   const isAuthRoute = request.nextUrl.pathname.startsWith(ROUTES.PAGES.AUTH.LOGIN)
@@ -165,19 +112,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = ROUTES.PAGES.DASHBOARD.ROOT
-    // Criar redirecionamento mantendo os novos headers (embora redirect ignore a maioria dos custom headers no request)
     const redirectResponse = NextResponse.redirect(url)
-    
-    // Se for um usuário de bypass, garantir que o cookie de bypass seja setado no redirecionamento
-    if (user.id === 'test-bypass-active' && user.email) {
-      redirectResponse.cookies.set('pacto-bypass-email', user.email, {
-        path: '/',
-        maxAge: 60 * 60 * 24,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      })
-    }
     return redirectResponse
   }
 
@@ -203,17 +138,6 @@ export async function updateSession(request: NextRequest) {
     })
   }
 
-  // Se houver bypass ativo, garantir que o cookie final contenha o email
-  if (user?.id === 'test-bypass-active' && user.email) {
-    console.log(`[middleware] Persistindo cookie de bypass para: ${user.email}`);
-    finalResponse.cookies.set('pacto-bypass-email', user.email, {
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24h
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    })
-  }
 
   return finalResponse
 }

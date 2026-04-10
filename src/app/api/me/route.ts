@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { BYPASS_EMAILS } from '@/constants/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,25 +118,7 @@ export async function GET(request: NextRequest) {
       finalToken = sessionData.accessToken;
     }
 
-    // =========================================================================
-    // CAMADA DE BYPASS PARA TESTES (REMOVER EM PRODUÇÃO)
-    // =========================================================================
-    if (!userId) {
-      const bypassEmail = request.headers.get('x-bypass-email');
-      
-      if (bypassEmail && BYPASS_EMAILS.includes(bypassEmail)) {
-        console.warn(`[API /api/me][TEST-BYPASS] Identificando usuário via bypass: ${bypassEmail}`);
-        const userFound = await prisma.perfil.findUnique({
-          where: { email: bypassEmail },
-          select: { userId: true }
-        });
-        if (userFound) {
-          userId = userFound.userId;
-          finalToken = 'test-bypass-token'; // Token dummy para o cliente se manter logado
-        }
-      }
-    }
-    // =========================================================================
+
 
     if (!userId) {
       return NextResponse.json(
