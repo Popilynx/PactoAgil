@@ -1,7 +1,7 @@
-import { Resend } from 'resend';
+import { getResendClient } from './resend';
 import { ActivationTemplate, WelcomeTemplate, MemberInviteTemplate } from './templates/EmailTemplates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => getResendClient();
 
 /**
  * Serviço Unificado de E-mail para Pacto Ágil
@@ -15,7 +15,7 @@ export class EmailService {
    */
   static async sendActivationEmail(email: string, nome: string, urlAtivacao: string) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await getResend().emails.send({
         from: this.FROM,
         to: [email],
         subject: '👑 Ative sua vantagem estratégica no Pacto Ágil',
@@ -45,7 +45,7 @@ export class EmailService {
     inviteUrl: string
   ) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await getResend().emails.send({
         from: this.FROM,
         to: [email],
         subject: `🤝 Convite: Junte-se à equipe da ${companyName} no Pacto Ágil`,
@@ -74,7 +74,7 @@ export class EmailService {
    */
   static async sendWelcomeEmail(email: string, nome: string, dashboardUrl: string) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await getResend().emails.send({
         from: this.FROM,
         to: [email],
         subject: '🚀 Bem-vindo à revolução do Pacto Ágil',

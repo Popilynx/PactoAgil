@@ -35,22 +35,24 @@ async function verify() {
 
   try {
     console.log('💳 Verificando API do Stripe...');
-    const customers = await stripe.customers.list({ limit: 1 });
-    console.log('✅ API do Stripe respondendo corretamente.');
+    const { data: customers } = await stripe.customers.list({ limit: 1 });
+    console.log(`✅ API do Stripe respondendo corretamente (${customers.length} cliente(s) encontrado(s)).`);
     results.stripe = true;
-  } catch (e) {
-    console.error('❌ Falha na conexão com o Stripe:', (e as Error).message);
+  } catch (err) {
+    console.error('❌ Falha na conexão com o Stripe:', (err as Error).message);
   }
 
   try {
     console.log('📧 Verificando API do Resend...');
     // Apenas listamos domínios se a chave for válida, sem enviar e-mail real
     const domains = await resend.domains.list();
-    const domainCount = (domains.data as any)?.length || 0;
+    // Ajuste para a estrutura real do SDK do Resend
+    const domainsList = (domains as any).data || [];
+    const domainCount = domainsList.length || 0;
     console.log(`✅ API do Resend configurada. Domínios encontrados: ${domainCount}`);
     results.resend = true;
-  } catch (e) {
-    console.error('❌ Falha na conexão com o Resend:', (e as Error).message);
+  } catch (err) {
+    console.error('❌ Falha na conexão com o Resend:', (err as Error).message);
   }
 
   try {
@@ -61,7 +63,7 @@ async function verify() {
     } else {
       console.log('⚠️ Supabase URL/Key ausentes no .env');
     }
-  } catch (e) {
+  } catch {
     console.error('❌ Erro na configuração do Supabase');
   }
 
