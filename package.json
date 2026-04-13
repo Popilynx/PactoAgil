@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.x",
+    "node": ">=20.3.0",
     "npm": ">=10.x"
   },
   "scripts": {
@@ -13,11 +13,22 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< Updated upstream
+=======
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/node": "^9.5.5",
+    "@astrojs/react": "^4.4.2",
+>>>>>>> Stashed changes
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.6.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+<<<<<<< Updated upstream
+=======
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^5.18.1",
+>>>>>>> Stashed changes
     "axios": "^1.14.0",
     "canvas-confetti": "^1.9.4",
     "docx": "^9.6.1",
@@ -49,6 +60,11 @@
     "eslint-config-next": "^15.5.14",
     "playwright": "^1.59.1",
     "tailwindcss": "^4",
+<<<<<<< Updated upstream
     "typescript": "^5"
+=======
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.58.2"
+>>>>>>> Stashed changes
   }
 }
