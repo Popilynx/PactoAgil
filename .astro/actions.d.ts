@@ -1,5 +1,3 @@
 declare module "astro:actions" {
-	type Actions = typeof import("C:/Users/Usuario/Documents/GitHub/PactoAgil/src/actions/index.ts")["server"];
-
-	export const actions: Actions;
+		export const actions: typeof import("C:/Users/Usuario/Documents/GitHub/PactoAgil/src/actions/index.ts")["server"];
 }
