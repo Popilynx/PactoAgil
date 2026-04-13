@@ -16,15 +16,15 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
-    "@astrojs/node": "^10.0.4",
-    "@astrojs/react": "^5.0.3",
+    "@astrojs/node": "^9.5.5",
+    "@astrojs/react": "^4.4.2",
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.6.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
     "@tailwindcss/vite": "^4.2.2",
-    "astro": "^6.1.5",
+    "astro": "^5.18.1",
     "axios": "^1.14.0",
     "canvas-confetti": "^1.9.4",
     "docx": "^9.6.1",
@@ -60,8 +60,5 @@
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.2"
-  },
-  "overrides": {
-    "vite": "^7"
   }
 }
