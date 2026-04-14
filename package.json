@@ -60,5 +60,8 @@
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.2"
+  },
+  "overrides": {
+    "@prisma/streams-local": "0.0.1"
   }
 }
