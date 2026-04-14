@@ -68,39 +68,48 @@ const {
 
     <!-- ChunkLoadError & SW Scripts -->
     <script is:inline>
-      /* Service Worker */
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-          .then(function(reg) {
+      (function() {
+        if (!('serviceWorker' in navigator)) return;
+
+        // ─── 1. Detectar SW legado do Next.js ───────────────────────────
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          var hasNextSW = regs.some(function(r) {
+            var sw = r.active || r.installing || r.waiting;
+            return sw && sw.scriptURL && sw.scriptURL.indexOf('_next') !== -1;
+          });
+          if (hasNextSW) {
+            // SW do Next.js ainda ativo → limpeza obrigatória
+            window.location.replace('/force-refresh.html?ts=' + Date.now());
+            return;
+          }
+
+          // ─── 2. Registrar novo SW Astro ─────────────────────────────────
+          navigator.serviceWorker.register('/sw.js').then(function(reg) {
             reg.addEventListener('updatefound', function() {
-              var newWorker = reg.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', function() {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              var nw = reg.installing;
+              if (nw) {
+                nw.addEventListener('statechange', function() {
+                  if (nw.state === 'installed' && navigator.serviceWorker.controller) {
                     window.location.reload();
                   }
                 });
               }
             });
           });
-      }
+        });
 
-      /* Hard Refresh logic */
-      function forceHardRefresh() {
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            for (var i = 0; i < names.length; i++) caches.delete(names[i]);
-          });
-        }
-        var url = new URL(window.location.href);
-        url.searchParams.set('nocache', Date.now());
-        window.location.href = url.toString();
-      }
-
-      window.addEventListener('error', function(e) {
-        var isChunkError = e.message && (e.message.includes('ChunkLoadError') || e.message.includes('MIME type'));
-        if (isChunkError) forceHardRefresh();
-      }, true);
+        // ─── 3. Detectar erros de chunk/MIME do Next.js ─────────────────
+        window.addEventListener('error', function(e) {
+          var msg = e.message || '';
+          var src = (e.filename || '');
+          var isNextError = src.indexOf('_next') !== -1 ||
+            msg.indexOf('ChunkLoadError') !== -1 ||
+            msg.indexOf('MIME') !== -1;
+          if (isNextError) {
+            window.location.replace('/force-refresh.html?ts=' + Date.now());
+          }
+        }, true);
+      })();
     </script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-var CACHE_VERSION = 'v1';
+var CACHE_VERSION = 'v2';
 var CACHE_NAME = 'pacto-agil-' + CACHE_VERSION;
 
 self.addEventListener('install', function(event) {
