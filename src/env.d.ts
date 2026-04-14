@@ -5,6 +5,7 @@ type User = import('@supabase/supabase-js').User
 declare namespace App {
   interface Locals {
     user: User | null;
+    userId: string | null;
   }
 }
 

@@ -1,12 +1,31 @@
 import type { APIRoute } from "astro";
 import prisma from "@/lib/prisma";
-import { requireAuth } from "@/lib/astro-auth-helpers";
+import { createSupabaseClient } from "@/lib/supabase/astro";
 import { stripe } from "@/lib/billing/stripe";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const authResult = await requireAuth(request, cookies);
+async function getUserId(request: Request, cookies: any, locals: any): Promise<string | Response> {
+  let userId = locals.userId;
+  
+  if (!userId) {
+    userId = request.headers.get('x-user-id');
+  }
+  
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    const supabase = createSupabaseClient(cookies);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
+    }
+    userId = user.id;
+  }
+  
+  return userId;
+}
+
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
+  const authResult = await getUserId(request, cookies, locals);
   if (authResult instanceof Response) return authResult;
 
   try {

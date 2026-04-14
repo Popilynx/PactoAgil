@@ -1,13 +1,27 @@
 import type { APIRoute } from 'astro';
 import { getGroqCompletion } from '@/lib/ai/groq';
-import { requireAuth } from '@/lib/astro-auth-helpers';
 import prisma from '@/lib/prisma';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const authResult = await requireAuth(request, cookies);
-    if (authResult instanceof Response) return authResult;
-    const userId = authResult;
+    // Usar locals.userId (injetado pelo middleware) como preferencial
+    let userId = locals.userId;
+    
+    // Fallback: verificar header x-user-id
+    if (!userId) {
+      userId = request.headers.get('x-user-id');
+    }
+    
+    // Último fallback: chamar Supabase Auth
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      const { createSupabaseClient } = await import('@/lib/supabase/astro');
+      const supabase = createSupabaseClient(cookies);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
+      }
+      userId = user.id;
+    }
 
     const { content } = await request.json();
 

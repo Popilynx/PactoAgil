@@ -2,12 +2,23 @@ import type { APIRoute } from 'astro';
 import { supabase } from '@/lib/supabase/astro';
 import { getGroqCompletion } from '@/lib/ai/groq';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const { data: { user }, error: authError } = await supabase(cookies).auth.getUser();
+    // Usar locals.userId (injetado pelo middleware) como preferencial
+    let userId = locals.userId;
     
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
+    // Fallback: verificar header x-user-id
+    if (!userId) {
+      userId = request.headers.get('x-user-id');
+    }
+    
+    // Último fallback: chamar Supabase Auth
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      const { data: { user } } = await supabase(cookies).auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
+      }
+      userId = user.id;
     }
 
     const { scenario, categories, fields, documentContent } = await request.json();

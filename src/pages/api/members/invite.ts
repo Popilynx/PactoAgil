@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseClient } from '@/lib/supabase/astro';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAuth } from '@/lib/astro-auth-helpers';
 import { EmailService } from '@/lib/email/EmailService';
 import { ROUTES } from '@/constants/routes';
 import { z } from 'zod';
@@ -17,9 +16,28 @@ const PLAN_LIMITS: Record<string, number> = {
   "GRATIS": 2,
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+async function getUserId(request: Request, cookies: any, locals: any): Promise<string | Response> {
+  let userId = locals.userId;
+  
+  if (!userId) {
+    userId = request.headers.get('x-user-id');
+  }
+  
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    const supabase = createSupabaseClient(cookies);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
+    }
+    userId = user.id;
+  }
+  
+  return userId;
+}
+
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const authResult = await requireAuth(request, cookies);
+    const authResult = await getUserId(request, cookies, locals);
     if (authResult instanceof Response) return authResult;
     const userId = authResult;
 

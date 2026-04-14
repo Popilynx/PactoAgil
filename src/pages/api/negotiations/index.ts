@@ -2,15 +2,28 @@ import type { APIRoute } from 'astro';
 import { supabase } from '@/lib/supabase/astro';
 import prisma from '@/lib/prisma';
 
-export const GET: APIRoute = async ({ request, cookies }) => {
+async function getUserId(request: Request, cookies: any, locals: any): Promise<string | null> {
+  let userId = locals.userId;
+  
+  if (!userId) {
+    userId = request.headers.get('x-user-id');
+  }
+  
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    const { data: { user } } = await supabase(cookies).auth.getUser();
+    userId = user?.id || null;
+  }
+  
+  return userId;
+}
+
+export const GET: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const { data: { user }, error: authError } = await supabase(cookies).auth.getUser();
+    const userId = await getUserId(request, cookies, locals);
     
-    if (authError || !user) {
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
     }
-
-    const userId = user.id;
 
     // Buscar a empresa vinculada ao usuário usando Prisma
     const empresa = await prisma.empresa.findFirst({
@@ -50,15 +63,13 @@ export const GET: APIRoute = async ({ request, cookies }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const { data: { user }, error: authError } = await supabase(cookies).auth.getUser();
+    const userId = await getUserId(request, cookies, locals);
     
-    if (authError || !user) {
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
     }
-
-    const userId = user.id;
 
     // Buscar a empresa vinculada ao usuário usando Prisma
     const empresa = await prisma.empresa.findFirst({
@@ -111,15 +122,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ request, cookies }) => {
+export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
   try {
-    const { data: { user }, error: authError } = await supabase(cookies).auth.getUser();
+    const userId = await getUserId(request, cookies, locals);
     
-    if (authError || !user) {
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401 });
     }
-
-    const userId = user.id;
 
     // Buscar a empresa vinculada ao usuário usando Prisma
     const empresa = await prisma.empresa.findFirst({
