@@ -423,7 +423,7 @@ export function GeradorPageContent() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] 2xl:grid-cols-[0.8fr_1.2fr] gap-6 min-h-[68vh]">
+      <section className="grid grid-cols-1 xl:grid-cols-[0.8fr_1.2fr] 2xl:grid-cols-[450px_1fr] gap-6 xl:gap-8 min-h-[75vh]">
         <article className="section-shell p-6 md:p-8 flex flex-col min-h-[66vh] bg-surface/40 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-soft/50">
             <h2 className="text-2xl font-semibold inline-flex items-center gap-3">

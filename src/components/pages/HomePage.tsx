@@ -44,27 +44,27 @@ export default function HomePage() {
     <main className="relative w-full overflow-x-hidden text-foreground selection:bg-accent selection:text-accent-foreground">
       <nav
         ref={navRef}
-        className={`fixed top-2 sm:top-4 md:top-5 left-1/2 -translate-x-1/2 z-[60] w-[min(1120px,calc(100%-1rem))] sm:w-[min(1120px,92%)] rounded-full px-3 py-2.5 sm:px-5 sm:py-3 border transition-all duration-500 flex items-center justify-between gap-2 sm:gap-3 group ${
+        className={`fixed top-2 sm:top-4 md:top-5 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-1rem)] sm:w-[min(1120px,92%)] rounded-full px-3 py-2.5 sm:px-5 sm:py-3 border transition-all duration-500 flex items-center justify-between gap-2 sm:gap-3 group ${
           isScrolled ? "glass-panel border-border-soft" : "border-transparent backdrop-blur-sm bg-black/10"
         }`}
       >
-        <BrandLogo 
-          href={ROUTES.PAGES.HOME} 
-          compact 
+        <BrandLogo
+          href={ROUTES.PAGES.HOME}
+          compact
           className="shrink-0"
           imageClassName={`transition-all duration-500 ${
             isScrolled ? "invert-0" : "invert"
-          } dark:invert`} 
+          } dark:invert`}
         />
-        <div className="hidden md:flex items-center gap-8 text-sm font-semibold tracking-wide">
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-semibold tracking-wide">
           <a href="#features" className={`hover-lift transition-all duration-300 ${isScrolled ? "text-foreground" : "text-white/90 drop-shadow-md hover:text-white"}`}>Funcionalidades</a>
           <a href="#manifesto" className={`hover-lift transition-all duration-300 ${isScrolled ? "text-foreground" : "text-white/90 drop-shadow-md hover:text-white"}`}>Manifesto</a>
           <a href="#protocol" className={`hover-lift transition-all duration-300 ${isScrolled ? "text-foreground" : "text-white/90 drop-shadow-md hover:text-white"}`}>Protocolo</a>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <a
             href={ROUTES.PAGES.AUTH.LOGIN}
-            className={`magnetic text-sm font-semibold transition-all duration-300 px-4 py-2 hidden sm:block ${
+            className={`magnetic text-sm font-semibold transition-all duration-300 px-3 py-1.5 sm:px-4 sm:py-2 hidden sm:block ${
               isScrolled ? "text-foreground" : "text-white/90 drop-shadow-md hover:text-white"
             }`}
           >
@@ -72,7 +72,7 @@ export default function HomePage() {
           </a>
           <a
             href="#pricing"
-            className="magnetic hover-lift inline-flex items-center gap-2 rounded-full bg-primary text-white px-6 py-2.5 font-bold text-sm shadow-xl shadow-primary/30 neo-ring"
+            className="magnetic hover-lift inline-flex items-center gap-2 rounded-full bg-primary text-white px-4 sm:px-6 py-2 sm:py-2.5 font-bold text-xs sm:text-sm shadow-xl shadow-primary/30 neo-ring"
           >
             Assinar
           </a>
@@ -89,35 +89,35 @@ export default function HomePage() {
       >
         <div className="absolute inset-0 bg-slate-950/40 mix-blend-multiply pointer-events-none" />
 
-        <div className="relative z-10 mx-auto w-[min(1240px,calc(100%-1.5rem))] sm:w-[min(1240px,92%)] pb-10 sm:pb-12 md:pb-20 lg:pb-24">
-          <div className="max-w-4xl space-y-6 sm:space-y-8">
-            <div className="hero-in inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.26em] text-cyan-400 font-semibold px-4 py-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 backdrop-blur-md">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="relative z-10 mx-auto w-full px-4 sm:px-6 pb-10 sm:pb-12 md:pb-20 lg:pb-24">
+          <div className="max-w-4xl space-y-4 sm:space-y-6 md:space-y-8">
+            <div className="hero-in inline-flex items-center gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-[0.26em] text-cyan-400 font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 backdrop-blur-md">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Inteligência Artificial Aplicada
             </div>
-            
-            <h1 className="hero-in text-[clamp(1.75rem,5.5vw,4.5rem)] md:text-6xl lg:text-7xl leading-[1.08] font-bold tracking-tight text-white drop-shadow-sm break-words">
+
+            <h1 className="hero-in text-[clamp(1.75rem,5.5vw,3.5rem)] sm:text-[clamp(2.5rem,7vw,4.5rem)] md:text-6xl lg:text-7xl leading-[1.08] font-bold tracking-tight text-white drop-shadow-sm break-words">
               A gestão coletiva sindical atinge a
-              <span className="font-serif italic font-normal text-[clamp(2.25rem,11vw,8.75rem)] md:text-8xl lg:text-[clamp(4rem,12vw,8.75rem)] leading-[0.85] text-primary block mt-3 sm:mt-4 lg:-ml-2 mix-blend-screen drop-shadow-2xl">
+              <span className="font-serif italic font-normal text-[clamp(2rem,9vw,6rem)] sm:text-[clamp(2.5rem,11vw,7rem)] md:text-8xl lg:text-[clamp(3rem,12vw,8.75rem)] leading-[0.85] text-primary block mt-2 sm:mt-3 lg:-ml-2 mix-blend-screen drop-shadow-2xl">
                 velocidade real.
               </span>
             </h1>
-            
-            <p className="hero-in max-w-2xl text-lg md:text-xl text-slate-200 opacity-90 font-medium leading-relaxed drop-shadow-sm">
+
+            <p className="hero-in max-w-2xl text-base sm:text-lg md:text-xl text-slate-200 opacity-90 font-medium leading-relaxed drop-shadow-sm">
               O Pacto Ágil centraliza a análise e criação de ACTs e CCTs com fluxos inteligentes baseados em jurisprudência. Uma plataforma construída para sindicatos de classe mundial.
             </p>
-            
-            <div className="hero-in pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+
+            <div className="hero-in pt-3 sm:pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <a
                 href={ROUTES.PAGES.AUTH.LOGIN}
-                className="magnetic hover-lift inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground px-8 py-4 font-bold text-base w-full sm:w-auto neo-ring"
+                className="magnetic hover-lift inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground px-6 sm:px-8 py-3 sm:py-4 font-bold text-sm sm:text-base w-full sm:w-auto neo-ring"
               >
                 Inicie uma Negociação
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </a>
               <a
                 href="#protocol"
-                className="hover-lift inline-flex items-center justify-center gap-2 rounded-full border border-border-soft px-8 py-4 font-semibold text-base w-full sm:w-auto bg-surface/30 backdrop-blur-sm"
+                className="hover-lift inline-flex items-center justify-center gap-2 rounded-full border border-border-soft px-6 sm:px-8 py-3 sm:py-4 font-semibold text-sm sm:text-base w-full sm:w-auto bg-surface/30 backdrop-blur-sm"
               >
                 Como funciona
               </a>

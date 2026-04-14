@@ -9,26 +9,42 @@ import pg from 'pg';
  */
 
 const prismaClientSingleton = () => {
-  const connectionString = import.meta.env.DATABASE_URL;
-  
+  // Lidar com o carregamento dinâmico Node (Hostinger/Passenger) ou ambiente dev Vite (Astro)
+  const isNode = typeof process !== 'undefined' && process.env;
+  const connectionString = (isNode ? process.env.DATABASE_URL : import.meta.env.DATABASE_URL);
+
   if (!connectionString) {
     throw new Error('DATABASE_URL is not defined');
   }
 
-  // Configuração do Pool do Postgres
-  // Supabase (e bancos cloud em geral) muitas vezes exige SSL. Definimos `rejectUnauthorized: false`
-  // para evitar erros de certificados ausentes/desatualizados no servidor de hospedagem.
-  const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-  
-  const pool = new pg.Pool({ 
-    connectionString,
-    ssl: isLocal ? undefined : { rejectUnauthorized: false }
+  // Parse manual da connection string para evitar problemas de URL encoding
+  // Supabase usa formato: postgresql://user:password@host:port/dbname
+  const url = new URL(connectionString);
+  const isLocal = url.hostname.includes('localhost') || url.hostname.includes('127.0.0.1');
+
+  // Configuração do Pool do Postgres com parâmetros explícitos
+  const pool = new pg.Pool({
+    host: url.hostname,
+    port: parseInt(url.port, 10) || 5432,
+    database: url.pathname.slice(1),
+    user: url.username,
+    password: decodeURIComponent(url.password),
+    ssl: isLocal ? undefined : { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
   });
+
+  // Handler de erros do pool para evitar crash em caso de falha de conexão
+  pool.on('error', (err) => {
+    console.error('[Prisma Pool] Erro inesperado no pool de conexões:', err.message);
+  });
+
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
     adapter,
-    log: ['error'],
+    log: ['error', 'warn'],
   });
 }
 

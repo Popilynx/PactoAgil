@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { checkDbHealth } from './db-health';
 
 /** Select mínimo para /api/profile e SSR do dashboard (evita include pesado). */
 const dashboardProfileSelect = {
@@ -33,6 +34,19 @@ const dashboardProfileSelect = {
     },
   },
 } as const;
+
+/**
+ * Verifica se o banco está saudável antes de executar queries.
+ * Loga o erro e retorna false se falhar.
+ */
+async function ensureDbConnected(): Promise<boolean> {
+  const health = await checkDbHealth();
+  if (!health.healthy) {
+    console.error('[DashboardProfile] Banco de dados indisponível:', health.error);
+    return false;
+  }
+  return true;
+}
 
 export type DashboardProfileJson = {
   perfil: {
@@ -88,6 +102,30 @@ export async function getDashboardProfileJson(
   userId: string,
   fallbackEmail: string | null
 ): Promise<DashboardProfileJson> {
+  // Verifica saúde do banco antes de executar
+  const dbHealthy = await ensureDbConnected();
+  if (!dbHealthy) {
+    // Retorna dados fallback se banco estiver indisponível
+    return {
+      perfil: {
+        nomeCompleto: 'Usuário',
+        email: fallbackEmail || '',
+        role: 'USER',
+        avatarUrl: null,
+      },
+      empresa: null,
+      assinatura: null,
+      membros: [],
+      nomeCompleto: 'Usuário',
+      email: fallbackEmail || '',
+      role: 'USER',
+      empresaNome: 'Sem empresa',
+      plano: 'SEM PLANO',
+      logoUrl: null,
+      corPrimaria: null,
+    };
+  }
+
   const perfil = await prisma.perfil.findUnique({
     where: { userId },
     select: dashboardProfileSelect,

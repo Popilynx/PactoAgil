@@ -244,48 +244,51 @@ export function DashboardShell({ children, currentPath, initialShellProfile = nu
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full overflow-x-hidden bg-background text-foreground flex">
+    <div className="min-h-screen min-h-[100dvh] w-full overflow-x-hidden bg-background text-foreground flex flex-col sm:flex-row">
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
           ${userProfile?.corPrimaria ? `
-            --accent: ${userProfile.corPrimaria}; 
+            --accent: ${userProfile.corPrimaria};
             --primary: ${userProfile.corPrimaria};
           ` : ""}
         }
       `}} />
-      
+
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex transition-all duration-300 ease-in-out border-r border-border-soft bg-surface/90 backdrop-blur-xl flex-col sticky top-0 h-screen z-30 ${isSidebarCollapsed ? 'w-24' : 'w-72'}`}>
-        <SidebarContent collapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+      <aside className={`hidden lg:flex transition-all duration-300 ease-in-out border-r border-border-soft bg-surface/90 backdrop-blur-xl flex-col sticky top-0 h-[100dvh] w-full max-w-[288px] ${isSidebarCollapsed ? 'max-w-[96px]' : ''}`}>
+        <div className="w-full h-full overflow-hidden">
+          <SidebarContent collapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+        </div>
       </aside>
 
       {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={toggleMobileMenu}
         />
       )}
 
       {/* Mobile Sidebar */}
-      <aside 
-        className={`fixed inset-y-0 left-0 w-72 bg-surface/95 backdrop-blur-xl border-r border-border-soft flex flex-col z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
+      <aside
+        className={`fixed inset-y-0 left-0 w-full max-w-[288px] bg-surface/95 backdrop-blur-xl border-r border-border-soft flex flex-col z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <SidebarContent />
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-[100dvh] w-full">
         {/* Mobile Header */}
-        <header className="lg:hidden px-4 py-4 border-b border-border-soft bg-surface/90 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between">
+        <header className="lg:hidden px-3 sm:px-4 py-3 sm:py-4 border-b border-border-soft bg-surface/90 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between safe-area-top">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
               <ShieldCheck className="w-5 h-5 text-primary" />
             </div>
             <span className="font-bold text-sm text-white">Pacto Ágil</span>
           </div>
-          <button 
+          <button
             onClick={toggleMobileMenu}
             className="p-2 text-foreground/80 hover:text-accent hover:bg-surface-dim rounded-lg transition-colors"
           >
@@ -293,8 +296,8 @@ export function DashboardShell({ children, currentPath, initialShellProfile = nu
           </button>
         </header>
 
-        <main className="flex-1 p-3 sm:p-4 md:p-8 lg:p-10 w-full min-w-0">
-          <div className="mx-auto w-full max-w-[1240px] h-full">
+        <main className="flex-1 w-full min-w-0 p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="w-full h-full">
             {children}
           </div>
         </main>
