@@ -10,7 +10,9 @@ Este projeto é **Astro SSR** com adapter **`@astrojs/node`** em modo **`standal
 | **Install command** | `npm ci` (com `package-lock.json` no repositório) ou `npm install` |
 | **Build command** | `npm run build` |
 | **Start command** | `npm run start` |
-| **Diretório de output** (se pedido) | `dist` — confirme na documentação atual do painel; o runtime usa o script `start`, não só ficheiros estáticos |
+| **Diretório de output** | `dist` |
+| **Arquivo de entrada** | `server.mjs` (obrigatório para validar no hPanel sem erros). |
+| **Preset / framework** | **Astro** (correto para este repositório). |
 
 ## Variáveis de ambiente
 
