@@ -1,4 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -42,7 +43,7 @@ interface DashboardShellProps {
   children: ReactNode;
   currentPath: string;
   /** Dados do perfil já carregados no servidor (cor/logo sem esperar o cliente). */
-  initialShellProfile?: UserProfile | null;
+  initialShellProfile?: UserProfile | null | undefined;
 }
 
 export function DashboardShell({ children, currentPath, initialShellProfile = null }: DashboardShellProps) {

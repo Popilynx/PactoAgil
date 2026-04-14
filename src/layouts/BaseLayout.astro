@@ -73,39 +73,42 @@ const {
 
         // Função para forçar refresh pesado
         function forceSync() {
-          console.log('[Pacto] Resíduo do Next.js detectado. Sincronizando...');
-          window.location.replace('/force-refresh.html?ts=' + Date.now());
+          console.log('[Pacto] Resíduo do Next.js detectado. Iniciando reset profundo...');
+          window.location.replace('/reset?reason=legacy_detected&ts=' + Date.now());
         }
 
-        // 1. Detectar Service Workers antigos
+        // 1. Detectar sinalizadores do Next.js ativos na janela
+        if (window.__NEXT_DATA__ || window.next || document.getElementById('__NEXT_DATA__')) {
+            forceSync();
+            return;
+        }
+
+        // 2. Detectar Service Workers antigos
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for (var reg of registrations) {
             var sw = reg.active || reg.installing || reg.waiting;
-            // Se o script URL contiver '_next' ou se o escopo for diferente do esperado
             if (sw && sw.scriptURL && (sw.scriptURL.indexOf('_next') !== -1 || sw.scriptURL.indexOf('next') !== -1)) {
               forceSync();
               return;
             }
-            // Por segurança, se estivermos no Astro e houver qualquer SW não identificado, desregistramos
-            // a menos que seja o nosso sw.js novo (que se auto-desinstala)
           }
 
-          // 2. Registrar nosso "limpador" (sw.js)
+          // Registrar nosso novo "limpador" (sw.js)
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
-            reg.update(); // Força busca de nova versão do sw.js
+            reg.update();
           }).catch(function(err) {
             console.error('[Pacto] Erro ao registrar limpador:', err);
           });
         });
 
-        // 3. Capturar erros típicos de cache corrompido (ChunkLoadError / MIME type)
+        // 3. Capturar erros típicos de cache corrompido
         window.addEventListener('error', function(e) {
           var msg = e.message || '';
           var src = (e.filename || '');
           if (
             src.indexOf('_next') !== -1 || 
             msg.indexOf('ChunkLoadError') !== -1 || 
-            msg.indexOf('unexpected token <') !== -1 || // HTML servido em vez de JS
+            msg.indexOf('unexpected token <') !== -1 || 
             msg.indexOf('MIME') !== -1
           ) {
             forceSync();
