@@ -30,12 +30,18 @@ self.addEventListener('fetch', function(event) {
   
   // Bloquear requisições para o diretório do Next.js
   if (url.includes('_next/')) {
-    console.log('[SW] Bloqueando requisição legada do Next.js:', url);
+    console.log('[SW] Detectado asset legado do Next.js, injetando script de recarregamento:', url);
     event.respondWith(
-      new Response('Legacy Next.js asset blocked for cache purge', {
-        status: 410,
-        statusText: 'Gone'
-      })
+      new Response(
+        "console.warn('Next.js asset blocked by SW, purging...'); window.location.replace('/force-refresh.html?v=' + Date.now());",
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/javascript',
+            'Cache-Control': 'no-store, no-cache, must-revalidate'
+          }
+        }
+      )
     );
     return;
   }

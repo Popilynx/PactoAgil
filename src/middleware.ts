@@ -9,7 +9,16 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, redirec
   // Se o browser pedir qualquer asset do Next.js, redirecionamos para limpeza.
   // Isso resolve o problema de usuários com HTML antigo em cache.
   if (pathname.includes('_next/')) {
-    return redirect('/force-refresh.html?ts=' + Date.now());
+    return new Response(
+      `console.warn('Next.js legacy detected, purging cache...'); window.location.replace('/force-refresh.html?ts=' + Date.now());`,
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/javascript',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        }
+      }
+    );
   }
 
   // Ignorar assets e manifestos
