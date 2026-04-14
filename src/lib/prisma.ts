@@ -17,18 +17,12 @@ const prismaClientSingleton = () => {
     throw new Error('DATABASE_URL is not defined');
   }
 
-  // Parse manual da connection string para evitar problemas de URL encoding
-  // Supabase usa formato: postgresql://user:password@host:port/dbname
-  const url = new URL(connectionString);
-  const isLocal = url.hostname.includes('localhost') || url.hostname.includes('127.0.0.1');
+  const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 
-  // Configuração do Pool do Postgres com parâmetros explícitos
+  // Configuração do Pool do Postgres
+  // Utilizar connectionString diretamente evita problemas de parsing e suporta parâmetros como ?pgbouncer=true
   const pool = new pg.Pool({
-    host: url.hostname,
-    port: parseInt(url.port, 10) || 5432,
-    database: url.pathname.slice(1),
-    user: url.username,
-    password: decodeURIComponent(url.password),
+    connectionString,
     ssl: isLocal ? undefined : { rejectUnauthorized: false },
     max: 10,
     idleTimeoutMillis: 30000,
