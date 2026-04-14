@@ -33,3 +33,16 @@ A plataforma costuma definir **`PORT`**; o servidor Astro usa `process.env.PORT`
 
 1. Modo **`standalone`** e `server.host` no `astro.config.mjs` — necessário para o processo escutar corretamente atrás do proxy.
 2. Comando de arranque **`npm run start`** (não apenas `node` sem o caminho do `package.json`).
+
+## Os logs de execução mostram “Next.js”?
+
+Se nos **logs em tempo real** aparecer `▲ Next.js` ou `Ready in …ms` típico do Next, **não é este projeto Astro** que está a correr. O painel está a arrancar **outra aplicação** (repositório antigo em Next ou outro site Node).
+
+**O que fazer:**
+
+1. Em **Websites**, confirma **qual** site Node está associado ao domínio **pactoagil.com.br** (pode haver **dois** sites: um Next antigo e um Astro novo).
+2. No site Node que deve servir o PactoAgil: **Repositório Git** = este repo, **branch** = a que tem Astro (ex.: `principal` / `main`), **sem** `package.json` de Next no commit deployado.
+3. **Comando de arranque** não pode ser `next start` nem o preset Next.js a sobrescrever o comando. Usa **`npm run start`** ou, se o hPanel exigir ficheiro: **`server.mjs`** na raiz (este repo já inclui `server.mjs`, que carrega o Astro em `dist/server/entry.mjs`).
+4. Depois de corrigir, os logs devem mostrar **`[PactoAgil] Arranque Astro SSR`** (mensagem em `server.mjs`) e **não** o banner do Next.js.
+
+Cache de HTML não gera logs “Next.js” no servidor — isso é sempre **processo errado**.

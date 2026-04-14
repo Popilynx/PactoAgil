@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizando Sistema - Pacto Ágil</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #020c1e;
+            color: white;
+            text-align: center;
+        }
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #006fee;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        h1 { font-size: 1.2rem; font-weight: 500; margin-bottom: 8px; }
+        p { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <h1>Sincronizando nova versão...</h1>
+    <p>Limpando cache residual para garantir a melhor performance.</p>
+
+    <script>
+        async function clearEverything() {
+            console.log('[Pacto] Iniciando limpeza profunda de cache...');
+            
+            try {
+                // 1. Limpar Caches da API Cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('[Pacto] API de Cache limpa.');
+                }
+
+                // 2. Desregistrar Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('[Pacto] Service Workers desregistrados.');
+                }
+
+                // 3. Limpar sessionStorage (LocalStorage mantemos para não deslogar se possível, 
+                // mas se houver erro persistente o usuário pode limpar manualmente)
+                sessionStorage.clear();
+                
+                console.log('[Pacto] Limpeza concluída. Redirecionando...');
+            } catch (err) {
+                console.error('[Pacto] Erro durante a limpeza:', err);
+            } finally {
+                // Redireciona para o login com flag de bypass de cache
+                const destination = '/login?refreshed=true&ts=' + Date.now();
+                window.location.href = destination;
+            }
+        }
+
+        // Executa após um pequeno delay para garantir que o loader seja visível
+        setTimeout(clearEverything, 800);
+    </script>
+</body>
+</html>

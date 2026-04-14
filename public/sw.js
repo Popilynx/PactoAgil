@@ -7,18 +7,19 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Ativando nova versão');
+  console.log('[SW] Ativando nova versão e limpando caches antigos');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME && cacheName.startsWith('pacto-agil-')) {
-            console.log('[SW] Removendo cache antigo:', cacheName);
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Removendo cache absoluto:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(function() {
+      // Força o SW a tomar controle de todas as abas abertas imediatamente
       return self.clients.claim();
     })
   );
