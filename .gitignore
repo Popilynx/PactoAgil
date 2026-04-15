@@ -27,6 +27,7 @@
 *.pem
 *.log
 .eslintcache
+.astro/
 
 # debug
 npm-debug.log*

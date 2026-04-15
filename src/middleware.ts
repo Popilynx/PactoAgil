@@ -32,12 +32,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.includes('favicon.ico') ||
     pathname.includes('manifest.json') ||
     pathname.includes('robots.txt') ||
+    pathname.includes('sw.js') ||
     pathname.startsWith('/_astro/') ||
     pathname.startsWith('/api/') ||
-    pathname.endsWith('.png') ||
-    pathname.endsWith('.svg') ||
-    pathname.endsWith('.jpg') ||
-    pathname.endsWith('.jpeg')
+    /\.(png|svg|jpg|jpeg|webp|gif|ico|css|js|woff|woff2|ttf|otf|map|json)$/.test(pathname)
   ) {
     return next();
   }

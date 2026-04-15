@@ -11,13 +11,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const entryPath = join(__dirname, 'dist', 'server', 'entry.mjs');
 const entryUrl = pathToFileURL(entryPath).href;
 
-console.log("[PactoAgil] Arranque Astro SSR (@astrojs/node) — não é Next.js");
-console.log("[PactoAgil] Entry:", entryPath);
+process.on('unhandledRejection', (err) => {
+  console.error('[PactoAgil] Unhandled promise rejection:', err);
+});
 
-import(entryUrl).catch((err) => {
+process.on('uncaughtException', (err) => {
+  console.error('[PactoAgil] Uncaught exception:', err);
+});
+
+try {
+  await import(entryUrl);
+} catch (err) {
   console.error(
-    '[PactoAgil] Falha ao carregar dist/server/entry.mjs. Corra "npm run build" nesta pasta e confirme que o diretório raiz no hPanel é ./',
+    '[PactoAgil] ERRO CRÍTICO: Falha ao carregar dist/server/entry.mjs.',
   );
+  console.error('[PactoAgil] Verifique se "npm run build" foi executado corretamente.');
+  console.error('[PactoAgil] Entry Path:', entryPath);
   console.error(err);
   process.exit(1);
-});
+}
